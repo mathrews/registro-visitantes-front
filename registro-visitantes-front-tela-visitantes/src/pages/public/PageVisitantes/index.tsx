@@ -6,40 +6,37 @@ import { Button } from "primereact/button";
 import { useState } from "react";
 
 const PageVisitantes = () => {
-    const [selectedGender, setSelectedGender] = useState("masculino")
+    const [selectedGender, setSelectedGender] = useState("masculino");
     const genders = [
         {
             gender: "masculino",
-            code: "M"
+            code: "M",
         },
         {
             gender: "feminino",
-            code: "F"
+            code: "F",
         },
         {
             gender: "outros",
-            code: "O"
-        }
-    ]
+            code: "O",
+        },
+    ];
     const {
         register: createData,
         handleSubmit,
         setValue: createValue,
-    } = useForm(
-        {
-            defaultValues: {
-                nome: "",
-                job: "",
-                cpf: "",
-                gender: selectedGender,
-                age: 10,
-                city: "",
-                block: ""
-            }
-        }
-    );
+    } = useForm({
+        defaultValues: {
+            nome: "",
+            job: "",
+            cpf: "",
+            gender: selectedGender,
+            age: 10,
+            city: "",
+            block: "",
+        },
+    });
     const onSubmit = (data: object) => console.log(data);
-
 
     return (
         <>
@@ -64,7 +61,11 @@ const PageVisitantes = () => {
 
                     <section className="flex flex-column">
                         <label htmlFor="nome">Nome do(a) visitante</label>
-                        <InputText className="border-2 border-500 border-round-md p-2 text-900" {...createData("nome", { required: true })} />
+                        <InputText
+                            className="border-2 border-500 border-round-md p-2 text-900"
+                            placeholder="Nome"
+                            {...createData("nome", { required: true })}
+                        />
                     </section>
 
                     <section className="flex flex-column">
@@ -78,7 +79,11 @@ const PageVisitantes = () => {
 
                     <section className="flex flex-column">
                         <label htmlFor="job">Profissão</label>
-                        <InputText className="border-2 border-500 border-round-md p-2 text-900" {...createData("job", { required: true })} />
+                        <InputText
+                            className="border-2 border-500 border-round-md p-2 text-900"
+                            placeholder="Sua Profissão, caso esteja empregado"
+                            {...createData("job", { required: true })}
+                        />
                     </section>
 
                     <section className="flex justify-content-center gap-4">
@@ -88,17 +93,25 @@ const PageVisitantes = () => {
                                 <Dropdown
                                     value={selectedGender}
                                     onChange={(e) => {
-                                        setSelectedGender(e.target.value)
-                                        createValue("gender", e.target.value)
+                                        setSelectedGender(e.target.value);
+                                        createValue("gender", e.target.value);
                                     }}
                                     options={genders}
                                     optionLabel="gender"
                                     placeholder="Selecione um Gênero"
                                     className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
                                     pt={{
-                                        root: { className: 'w-full md:w-14rem' },
-                                        item: { className: 'bg-white p-2 text-sm text-600 transition-duration-200 hover:text-900' },
-                                        list: { className: 'border-200 border-3 border-round-lg' }
+                                        root: {
+                                            className: "w-full md:w-14rem",
+                                        },
+                                        item: {
+                                            className:
+                                                "bg-white p-2 text-sm text-600 transition-duration-200 hover:text-900",
+                                        },
+                                        list: {
+                                            className:
+                                                "border-200 border-3 border-round-lg",
+                                        },
                                     }}
                                 />
                             </section>
@@ -123,9 +136,17 @@ const PageVisitantes = () => {
                                     placeholder="Selecione uma Cidade"
                                     className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
                                     pt={{
-                                        root: { className: 'w-full md:w-14rem' },
-                                        item: { className: 'bg-white p-2 text-sm text-600 transition-duration-200 hover:text-900' },
-                                        list: { className: 'border-200 border-3 border-round-lg bg-white' }
+                                        root: {
+                                            className: "w-full md:w-14rem",
+                                        },
+                                        item: {
+                                            className:
+                                                "bg-white p-2 text-sm text-600 transition-duration-200 hover:text-900",
+                                        },
+                                        list: {
+                                            className:
+                                                "border-200 border-3 border-round-lg bg-white",
+                                        },
                                     }}
                                 />
                             </section>
@@ -139,16 +160,27 @@ const PageVisitantes = () => {
                                     placeholder="Selecione um Bairro"
                                     className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
                                     pt={{
-                                        root: { className: 'w-full md:w-14rem' },
-                                        item: { className: 'bg-white p-2 text-sm text-600 transition-duration-200 hover:text-900' },
-                                        list: { className: 'border-200 border-3 border-round-lg bg-white' }
+                                        root: {
+                                            className: "w-full md:w-14rem",
+                                        },
+                                        item: {
+                                            className:
+                                                "bg-white p-2 text-sm text-600 transition-duration-200 hover:text-900",
+                                        },
+                                        list: {
+                                            className:
+                                                "border-200 border-3 border-round-lg bg-white",
+                                        },
                                     }}
                                 />
                             </section>
                         </div>
-
                     </section>
-                    <Button label="Enviar" type="submit" className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold"></Button>
+                    <Button
+                        label="Enviar"
+                        type="submit"
+                        className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold"
+                    ></Button>
                 </form>
             </main>
             <footer></footer>
