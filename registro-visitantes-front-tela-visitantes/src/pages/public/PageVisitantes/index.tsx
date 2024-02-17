@@ -1,5 +1,4 @@
 import { useForm } from "react-hook-form";
-import brasao from "../../../assets/brasao-do-ceara.png";
 import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
@@ -40,16 +39,6 @@ const PageVisitantes = () => {
 
     return (
         <>
-            <header className="bg-green-300 flex p-4 justify-content-between align-items-center">
-                <h1>Museu da Arte</h1>
-                <div className="w-4rem">
-                    <img
-                        className="w-full"
-                        src={brasao}
-                        alt="Brasão estado do Ceará"
-                    />
-                </div>
-            </header>
             <main className="surface-500 w-full h-screen flex justify-content-center align-items-center">
                 <form
                     className="p-5 bg-white border-round-md"
