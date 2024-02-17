@@ -6,7 +6,7 @@ const PublicLayout = () => {
     return (
         <>
             <header className="bg-green-300 flex p-4 justify-content-between align-items-center">
-                <h1>Museu da Arte</h1>
+                <h1 className="text-white">Museu da Arte</h1>
                 <div className="w-4rem">
                     <img
                         className="w-full"

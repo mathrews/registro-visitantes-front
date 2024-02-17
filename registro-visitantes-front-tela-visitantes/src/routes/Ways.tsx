@@ -11,6 +11,7 @@ const Ways = () => {
                 <Route path="/" element={<PublicLayout/>}>
                   <Route path="/" element={<PageVisitantes/>}/>
                   <Route path="/login" element={<PageLogin/>}/>
+                  <Route path="/admin" element={<PageLogin/>}/>
                 </Route>
             </Routes>
         </BrowserRouter>
