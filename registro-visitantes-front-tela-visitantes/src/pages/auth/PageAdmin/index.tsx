@@ -43,15 +43,15 @@ const TelaAdminContainer = styled.section`
 `;
 
 type tableVisitorsYear = {
-    labels: string[],
+    labels: string[];
     datasets: {
-            label: string,
-            data: number[],
-            fill: boolean,
-            borderColor: string,
-            tension: number
-        }[]
-}
+        label: string;
+        data: number[];
+        fill: boolean;
+        borderColor: string;
+        tension: number;
+    }[];
+};
 
 const PageAdmin = () => {
     const [chartData, setChartData] = useState({});
@@ -60,8 +60,10 @@ const PageAdmin = () => {
     const [chartOptionsPie, setChartOptionsPie] = useState({});
     const [chartDataLine, setChartDataLine] = useState({});
     const [chartOptionsLine, setChartOptionsLine] = useState({});
+    const [chartDataPieJobs, setChartDataPieJobs] = useState({});
+    const [chartOptionsPieJobs, setChartOptionsPieJobs] = useState({});
 
-    const [visitorsYear, setVisitorsYear] = useState<number>()
+    const [visitorsYear, setVisitorsYear] = useState<number>();
     useEffect(() => {
         //CONFIGURAÇÕES DO CHART BAR
 
@@ -143,34 +145,45 @@ const PageAdmin = () => {
         //CONFIG CHART LINE
 
         const documentStyle = getComputedStyle(document.documentElement);
-        const textColor = documentStyle.getPropertyValue('--text-color');
-        const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
-        const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
+        const textColor = documentStyle.getPropertyValue("--text-color");
+        const textColorSecondary = documentStyle.getPropertyValue(
+            "--text-color-secondary"
+        );
+        const surfaceBorder =
+            documentStyle.getPropertyValue("--surface-border");
         const dataLine = {
-            labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+            labels: [
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+            ],
             datasets: [
                 {
-                    label: 'Masculino',
+                    label: "Masculino",
                     data: [65, 59, 80, 81, 56, 55, 40],
                     fill: false,
-                    borderColor: documentStyle.getPropertyValue('--blue-500'),
-                    tension: 0.4
+                    borderColor: documentStyle.getPropertyValue("--blue-500"),
+                    tension: 0.4,
                 },
                 {
-                    label: 'Feminino',
+                    label: "Feminino",
                     data: [28, 48, 40, 19, 86, 27, 90],
                     fill: false,
-                    borderColor: documentStyle.getPropertyValue('--pink-500'),
-                    tension: 0.4
+                    borderColor: documentStyle.getPropertyValue("--pink-500"),
+                    tension: 0.4,
                 },
                 {
-                    label: 'Outros',
+                    label: "Outros",
                     data: [54, 60, 30, 15, 13, 90, 95],
                     fill: false,
-                    borderColor: documentStyle.getPropertyValue('--orange-500'),
-                    tension: 0.4
+                    borderColor: documentStyle.getPropertyValue("--orange-500"),
+                    tension: 0.4,
                 },
-            ]
+            ],
         };
         const optionsLine = {
             maintainAspectRatio: false,
@@ -178,45 +191,85 @@ const PageAdmin = () => {
             plugins: {
                 legend: {
                     labels: {
-                        color: textColor
-                    }
-                }
+                        color: textColor,
+                    },
+                },
             },
             scales: {
                 x: {
                     ticks: {
-                        color: textColorSecondary
+                        color: textColorSecondary,
                     },
                     grid: {
-                        color: surfaceBorder
-                    }
+                        color: surfaceBorder,
+                    },
                 },
                 y: {
                     ticks: {
-                        color: textColorSecondary
+                        color: textColorSecondary,
                     },
                     grid: {
-                        color: surfaceBorder
-                    }
-                }
-            }
+                        color: surfaceBorder,
+                    },
+                },
+            },
         };
 
         const allVisitorsYear = (table: tableVisitorsYear) => {
             const datasets = table.datasets;
+            let sum = 0;
             datasets.map((item) => {
-                item.data.map((item, index, array) => {
-                    let sum: number = 0;
-                    setVisitorsYear(sum += array[index])
-                }) 
-            })
-        }
-        allVisitorsYear(dataLine)
+                item.data.map((item) => {
+                    sum += item;
+                });
+            });
+            setVisitorsYear(sum);
+        };
+        allVisitorsYear(dataLine);
         setChartDataLine(dataLine);
         setChartOptionsLine(optionsLine);
-    }, []);
 
-    
+        //CONFIG CHART PIE EMPREGOS
+
+        const dataPieJobs = {
+            labels: ["Devs", "Artistas visuais", "Escultores"],
+            datasets: [
+                {
+                    data: [540, 325, 702],
+                    backgroundColor: [
+                        "rgba(255, 159, 64, 0.2)",
+                        "rgba(75, 192, 192, 0.2)",
+                        "rgba(54, 162, 235, 0.2)",
+                        "rgba(153, 102, 255, 0.2)",
+                    ],
+                    borderColor: [
+                        "rgb(255, 159, 64)",
+                        "rgb(75, 192, 192)",
+                        "rgb(54, 162, 235)",
+                        "rgb(153, 102, 255)",
+                    ],
+                    hoverBackgroundColor: [
+                        "rgba(255, 159, 64, 0.2)",
+                        "rgba(75, 192, 192, 0.2)",
+                        "rgba(54, 162, 235, 0.2)",
+                        "rgba(153, 102, 255, 0.2)",
+                    ],
+                },
+            ],
+        };
+        const optionsPieJobs = {
+            plugins: {
+                legend: {
+                    labels: {
+                        usePointStyle: true,
+                    },
+                },
+            },
+        };
+
+        setChartDataPieJobs(dataPieJobs);
+        setChartOptionsPieJobs(optionsPieJobs);
+    }, []);
 
     return (
         <>
@@ -242,7 +295,7 @@ const PageAdmin = () => {
                             type="pie"
                             data={chartDataPie}
                             options={chartOptionsPie}
-                            />
+                        />
                     </div>
                     <div>
                         <h4>Total visitantes (por mês)</h4>
@@ -254,7 +307,15 @@ const PageAdmin = () => {
                         />
                         <h4>Total de visitantes por ano {visitorsYear}</h4>
                     </div>
-                    <div>Pizza</div>
+                    <div>
+                        <h4>Top Empregos</h4>
+                        <Chart
+                            className="grafico"
+                            type="pie"
+                            data={chartDataPieJobs}
+                            options={chartOptionsPieJobs}
+                        />
+                    </div>
                 </div>
             </TelaAdminContainer>
         </>
