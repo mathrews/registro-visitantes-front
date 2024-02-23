@@ -11,6 +11,7 @@ const schema = yup.object({
     name: yup.string().required().uppercase(),
     job: yup.string(),
     cpf: yup.string().required(),
+    cep: yup.string().required(),
     gender: yup.object().required(),
     age: yup.number().required(),
     city: yup.string().required(),
@@ -43,6 +44,7 @@ const PageVisitantes = () => {
         defaultValues: {
             name: "",
             job: "",
+            cep: "",
             cpf: "",
             gender: selectedGender,
             age: 10,
@@ -81,7 +83,7 @@ const PageVisitantes = () => {
                         />
                     </section>
 
-                    <section className="flex flex-column">
+                    <section className="flex flex-column mt-1">
                         <label htmlFor="cpf">CPF</label>
                         <InputMask
                             className="border-2 border-500 border-round-md p-2 text-900"
@@ -92,7 +94,7 @@ const PageVisitantes = () => {
                         />
                     </section>
 
-                    <section className="flex flex-column">
+                    <section className="flex flex-column mt-1">
                         <label htmlFor="job">Profissão</label>
                         <InputText
                             className="border-2 border-500 border-round-md p-2 text-900"
@@ -101,7 +103,17 @@ const PageVisitantes = () => {
                         />
                     </section>
 
-                    <section className="flex justify-content-center gap-4">
+                    <section className="flex flex-column mt-1">
+                        <label htmlFor="cep">CEP</label>
+                        <InputMask
+                            className="border-2 border-500 border-round-md p-2 text-900"
+                            placeholder="Digite seu CEP"
+                            mask="99999-999"
+                            {...createData("cep")}
+                        />
+                    </section>
+
+                    <section className="flex justify-content-center gap-4 mt-1">
                         <div>
                             <section className="flex flex-column">
                                 <label htmlFor="gender">Gênero</label>
@@ -115,6 +127,19 @@ const PageVisitantes = () => {
                                     optionLabel="gender"
                                     placeholder="Selecione um Gênero"
                                     className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
+                                    pt={{
+                                        root: {
+                                            className: "w-full md:w-14rem",
+                                        },
+                                        item: {
+                                            className:
+                                                "bg-white p-2 text-sm text-600 transition-duration-200 hover:text-900",
+                                        },
+                                        list: {
+                                            className:
+                                                "border-200 border-3 border-round-lg",
+                                        },
+                                    }}
                                 />
                             </section>
                             <section className="flex flex-column">
@@ -130,50 +155,18 @@ const PageVisitantes = () => {
                         <div>
                             <section className="flex flex-column">
                                 <label htmlFor="city">Cidade</label>
-                                <Dropdown
-                                    onChange={(e) =>
-                                        createValue("city", e.target.value)
-                                    }
-                                    optionLabel="city"
-                                    placeholder="Selecione uma Cidade"
-                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
-                                    pt={{
-                                        root: {
-                                            className: "w-full md:w-14rem",
-                                        },
-                                        item: {
-                                            className:
-                                                "bg-white p-2 text-sm text-600 transition-duration-200 hover:text-900",
-                                        },
-                                        list: {
-                                            className:
-                                                "border-200 border-3 border-round-lg bg-white",
-                                        },
-                                    }}
+                                <InputText
+                                    {...createData("city")}
+                                    placeholder="Digite sua Cidade"
+                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"                                
                                 />
                             </section>
                             <section className="flex flex-column">
                                 <label htmlFor="block">Bairro</label>
-                                <Dropdown
-                                    onChange={(e) =>
-                                        createValue("block", e.target.value)
-                                    }
-                                    optionLabel="bairro"
-                                    placeholder="Selecione um Bairro"
-                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
-                                    pt={{
-                                        root: {
-                                            className: "w-full md:w-14rem",
-                                        },
-                                        item: {
-                                            className:
-                                                "bg-white p-2 text-sm text-600 transition-duration-200 hover:text-900",
-                                        },
-                                        list: {
-                                            className:
-                                                "border-200 border-3 border-round-lg bg-white",
-                                        },
-                                    }}
+                                <InputText
+                                    {...createData("block")}
+                                    placeholder="Digite seu bairro"
+                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"                                
                                 />
                             </section>
                         </div>

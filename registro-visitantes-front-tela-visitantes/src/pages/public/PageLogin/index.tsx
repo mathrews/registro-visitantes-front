@@ -1,13 +1,24 @@
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { useForm } from "react-hook-form";
+import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
+
+const schema = yup
+    .object({
+        user: yup.string().required(),
+        password: yup.string().required(),
+    })
+    .required();
 
 const PageLogin = () => {
-
-    const {
-        register: loginData,
-        handleSubmit,
-    } = useForm();
+    const { register: loginData, handleSubmit } = useForm({
+        defaultValues: {
+            user: "",
+            password: "",
+        },
+        resolver: yupResolver(schema),
+    });
     const onSubmit = (data: object) => console.log(data);
 
     return (
@@ -22,7 +33,8 @@ const PageLogin = () => {
                         <label htmlFor="user">Usuário</label>
                         <InputText
                             className="border-2 border-500 border-round-md p-2 text-900"
-                            {...loginData("user", { required: true })}
+                            placeholder="Digite seu nome de usuário"
+                            {...loginData("user")}
                         />
                     </section>
 
@@ -30,8 +42,10 @@ const PageLogin = () => {
                         <label htmlFor="password">Senha</label>
                         <InputText
                             className="border-2 border-500 border-round-md p-2 text-900"
-                            {...loginData("password", { required: true })}
+                            placeholder="Digite sua senha. Ela deve conter entre 8 a 12 caracteres"
+                            {...loginData("password")}
                         />
+                        <p className="text-900"></p>
                     </section>
 
                     <Button
