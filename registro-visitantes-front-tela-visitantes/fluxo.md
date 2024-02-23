@@ -2,17 +2,19 @@
 
 ## Telas: 
 
-- [ ] Tela de Cadastro Visitante
+- [x] Tela de Cadastro Visitante
 
-- [ ] Tela de login para Dashboard
+- [x] Tela de login para Dashboard
 
-- [ ] Tela de Dashboard
+- [x] Tela de Dashboard
 
-- [ ] Tela do visitante cadastrado
+- [x] Tela do visitante cadastrado
 
 - OBS: cada tela deverá ter sua rota pré-definida.
 
 ## Fazer a mockagem do projeto:
+
+- [ ] Fazer o tratamento de erro dos inputs da tela de cadastro do visitante e da tela de login
 
 - [ ] Fazer o db.json e suas rotas
 
