@@ -4,41 +4,61 @@ import { InputMask } from "primereact/inputmask";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
 import { useState } from "react";
-import * as yup from "yup"
+import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { Dialog } from "primereact/dialog";
+import { API } from "../../../service";
 
-const schema = yup.object({
-    name: yup.string().required().uppercase(),
-    job: yup.string(),
-    cpf: yup.string().required(),
-    cep: yup.string().required(),
-    gender: yup.object().required(),
-    age: yup.number().required(),
-    city: yup.string().required(),
-    block: yup.string().required()
-  }).required()  
+const schema = yup
+    .object({
+        name: yup.string().required().uppercase(),
+        job: yup.string(),
+        cpf: yup.string().required(),
+        cep: yup.string().required(),
+        gender: yup.object().required(),
+        age: yup.number().required(),
+        city: yup.string().required(),
+        block: yup.string(),
+    })
+    .required();
+
+interface visitor {
+    id: number;
+    nome: string;
+    cpf: string;
+    dataNascimento: string;
+    profissao: string;
+    endereco: string;
+    numero: number;
+    complemento: number;
+    bairro: string;
+    cidade: string;
+    uf: string;
+    cep: string;
+    genero_id: number;
+}
 
 const PageVisitantes = () => {
-    const [selectedGender, setSelectedGender] = useState("masculino");
+    const [selectedGender, setSelectedGender] = useState<number>(0);
     const genders = [
         {
             gender: "masculino",
-            code: "M",
+            value: 1,
         },
         {
             gender: "feminino",
-            code: "F",
+            value: 2,
         },
         {
             gender: "outros",
-            code: "O",
+            value: 3,
         },
     ];
     const {
         register: createData,
         handleSubmit,
         setValue: createValue,
-        formState: {errors}
+        formState: { errors },
     } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
@@ -47,7 +67,7 @@ const PageVisitantes = () => {
             cep: "",
             cpf: "",
             gender: selectedGender,
-            age: 10,
+            age: 0,
             city: "",
             block: "",
         },
@@ -60,7 +80,28 @@ const PageVisitantes = () => {
         console.log(errors.age?.message);
         console.log(errors.city?.message);
         console.log(errors.block?.message);
-        console.log(data)
+        console.log(data);
+    };
+
+    const [modal, setModal] = useState<boolean>(false);
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [cpfValue, setCpfValue] = useState<string>("");
+    const [visitorData, setVisitorData] = useState<visitor>();
+    const searchCPF = async () => {
+        const response = (
+            await API.get(
+                `visitante/cpf/${cpfValue
+                    .replaceAll("-", "")
+                    .replaceAll(".", "")}`
+            )
+        ).data;
+        console.log(response);
+        if (response[0]) {
+            setSelectedGender(response[0].genero_id);
+            setVisitorData(response[0]);
+        }
+        console.log(selectedGender);
     };
 
     return (
@@ -75,15 +116,6 @@ const PageVisitantes = () => {
                     </h1>
 
                     <section className="flex flex-column">
-                        <label htmlFor="name">Nome do(a) visitante</label>
-                        <InputText
-                            className="border-2 border-500 border-round-md p-2 text-900"
-                            placeholder="Nome"
-                            {...createData("name")}
-                        />
-                    </section>
-
-                    <section className="flex flex-column mt-1">
                         <label htmlFor="cpf">CPF</label>
                         <InputMask
                             className="border-2 border-500 border-round-md p-2 text-900"
@@ -91,12 +123,30 @@ const PageVisitantes = () => {
                             placeholder="000.000.000-00"
                             mask="999.999.999-99"
                             {...createData("cpf")}
+                            onBlur={(e) => setCpfValue(e.target.value)}
+                        />
+                        <Button
+                            label="Pesquisar"
+                            type="button"
+                            className="w-full mt-1 mb-1 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700"
+                            onClick={searchCPF}
+                        ></Button>
+                    </section>
+
+                    <section className="flex flex-column mt-1">
+                        <label htmlFor="name">Nome do(a) visitante</label>
+                        <InputText
+                            value={visitorData?.nome}
+                            className="border-2 border-500 border-round-md p-2 text-900"
+                            placeholder="Nome"
+                            {...createData("name")}
                         />
                     </section>
 
                     <section className="flex flex-column mt-1">
                         <label htmlFor="job">Profissão</label>
                         <InputText
+                            value={visitorData?.profissao}
                             className="border-2 border-500 border-round-md p-2 text-900"
                             placeholder="Sua Profissão, caso esteja empregado"
                             {...createData("job")}
@@ -106,6 +156,7 @@ const PageVisitantes = () => {
                     <section className="flex flex-column mt-1">
                         <label htmlFor="cep">CEP</label>
                         <InputMask
+                            value={visitorData?.cep}
                             className="border-2 border-500 border-round-md p-2 text-900"
                             placeholder="Digite seu CEP"
                             mask="99999-999"
@@ -125,6 +176,7 @@ const PageVisitantes = () => {
                                     }}
                                     options={genders}
                                     optionLabel="gender"
+                                    optionValue="value"
                                     placeholder="Selecione um Gênero"
                                     className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
                                     pt={{
@@ -156,17 +208,19 @@ const PageVisitantes = () => {
                             <section className="flex flex-column">
                                 <label htmlFor="city">Cidade</label>
                                 <InputText
+                                    value={visitorData?.cidade}
                                     {...createData("city")}
                                     placeholder="Digite sua Cidade"
-                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"                                
+                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
                                 />
                             </section>
                             <section className="flex flex-column">
                                 <label htmlFor="block">Bairro</label>
                                 <InputText
+                                    value={visitorData?.bairro}
                                     {...createData("block")}
                                     placeholder="Digite seu bairro"
-                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"                                
+                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
                                 />
                             </section>
                         </div>
@@ -175,8 +229,33 @@ const PageVisitantes = () => {
                         label="Enviar"
                         type="submit"
                         className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700"
+                        onClick={() => setModal(true)}
                     ></Button>
                 </form>
+                {modal && (
+                    <Dialog
+                        visible={modal}
+                        style={{ width: "50vw" }}
+                        breakpoints={{ "960px": "75vw", "641px": "100vw" }}
+                        onHide={() => setModal(false)}
+                        pt={{
+                            root: {
+                                className: "bg-white p-6 border-round-lg",
+                            },
+                            mask: {
+                                className: "bg-black-alpha-50",
+                            },
+                            closeButton: {
+                                className: "w-1rem h-1rem",
+                            },
+                            closeButtonIcon: {
+                                className: "w-1rem h-1rem",
+                            },
+                        }}
+                    >
+                        <h1 className="m-0">Cadastro concluído com sucesso!</h1>
+                    </Dialog>
+                )}
             </main>
             <footer></footer>
         </>
