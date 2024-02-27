@@ -3,11 +3,12 @@ import { InputText } from "primereact/inputtext";
 import { InputMask } from "primereact/inputmask";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Dialog } from "primereact/dialog";
 import { API } from "../../../service";
+import { validarCPF } from "../../../utils/validateCPF";
 
 const schema = yup
     .object({
@@ -15,8 +16,8 @@ const schema = yup
         job: yup.string(),
         cpf: yup.string().required(),
         cep: yup.string().required(),
-        gender: yup.object().required(),
-        age: yup.number().required(),
+        gender: yup.number().required(),
+        dataDeNascimento: yup.string(),
         city: yup.string().required(),
         block: yup.string(),
     })
@@ -39,6 +40,7 @@ interface visitor {
 }
 
 const PageVisitantes = () => {
+    const [modal, setModal] = useState<boolean>(false);
     const [selectedGender, setSelectedGender] = useState<number>(0);
     const genders = [
         {
@@ -54,183 +56,438 @@ const PageVisitantes = () => {
             value: 3,
         },
     ];
+
+    const [visitorData, setVisitorData] = useState<visitor>();
     const {
         register: createData,
         handleSubmit,
         setValue: createValue,
-        formState: { errors },
     } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
-            name: "",
-            job: "",
-            cep: "",
-            cpf: "",
+            name: visitorData ? visitorData.nome : "",
+            job: visitorData ? visitorData.profissao : "",
+            cep: visitorData ? visitorData.cep : "",
+            cpf: visitorData ? visitorData.cpf : "",
             gender: selectedGender,
-            age: 0,
-            city: "",
-            block: "",
+            dataDeNascimento: "",
+            city: visitorData ? visitorData.cidade : "",
+            block: visitorData ? visitorData.bairro : "",
         },
     });
-    const onSubmit = (data: object) => {
-        console.log(errors.name?.message);
-        console.log(errors.job?.message);
-        console.log(errors.cpf?.message);
-        console.log(errors.gender?.message);
-        console.log(errors.age?.message);
-        console.log(errors.city?.message);
-        console.log(errors.block?.message);
+    const createDataPost = (data: object) => {
         console.log(data);
     };
 
-    const [modal, setModal] = useState<boolean>(false);
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [cpfValue, setCpfValue] = useState<string>("");
-    const [visitorData, setVisitorData] = useState<visitor>();
+    const [errorMessageCpf, setErrorMessageCpf] = useState<string>();
+    const [showForm, setShowForm] = useState<boolean>(false);
+    const [cpfExists, setCpfExists] = useState<boolean>(false);
     const searchCPF = async () => {
-        const response = (
-            await API.get(
-                `visitante/cpf/${cpfValue
-                    .replaceAll("-", "")
-                    .replaceAll(".", "")}`
-            )
-        ).data;
-        console.log(response);
-        if (response[0]) {
-            setSelectedGender(response[0].genero_id);
-            setVisitorData(response[0]);
+        if (validarCPF(cpfValue)) {
+            const response = (
+                await API.get(
+                    `visitante/cpf/${cpfValue
+                        .replaceAll("-", "")
+                        .replaceAll(".", "")}`
+                )
+            ).data;
+            if (!response) {
+                setShowForm(true);
+            } else {
+                setShowForm(true);
+                setCpfExists(true);
+                if (response[0]) {
+                    setSelectedGender(response[0].genero_id);
+                    setVisitorData(response[0]);
+                }
+            }
+        } else {
+            setErrorMessageCpf("Este CPF é invalido, tente novamente!");
         }
-        console.log(selectedGender);
     };
+    const [updateData, setUpdateData] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (visitorData) {
+            createValue('name', visitorData.nome);
+            createValue('job', visitorData.profissao);
+            createValue('cep', visitorData.cep);
+            createValue('cpf', visitorData.cpf);
+            createValue('gender', visitorData.genero_id);
+            createValue('dataDeNascimento', visitorData.dataNascimento);
+            createValue('city', visitorData.cidade);
+            createValue('block', visitorData.bairro);
+        }
+    }, [visitorData, createValue]);
 
     return (
         <>
             <main className="surface-500 w-full h-screen flex justify-content-center align-items-center">
                 <form
                     className="p-5 bg-white border-round-md"
-                    onSubmit={handleSubmit(onSubmit)}
+                    onSubmit={handleSubmit(createDataPost)}
                 >
                     <h1 className="block text-center text-3xl mb-3">
-                        Seja bem-vindo(a) visitante
+                        Seja bem-vindo(a) visitante!
                     </h1>
+                    {!showForm ? (
+                        <section className="flex flex-column">
+                            <label htmlFor="cpf">CPF</label>
+                            <InputMask
+                                className="border-2 border-500 border-round-md p-2 text-900"
+                                id="cpf"
+                                placeholder="000.000.000-00"
+                                mask="999.999.999-99"
+                                onBlur={(e) => setCpfValue(e.target.value)}
+                            />
+                            <Button
+                                label="Pesquisar"
+                                type="button"
+                                className="w-full mt-1 mb-1 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700"
+                                onClick={searchCPF}
+                            ></Button>
+                            <p className="block text-center mb-1">
+                                Se você já estiver visitado o museu, o
+                                formulário aprentará seus dados já previos,
+                                porém se for a primeira vez, o formulário será
+                                apresentado vazio
+                            </p>
+                            <h4 className="block text-center mb-1 text-red-400">
+                                {errorMessageCpf ? errorMessageCpf : ""}
+                            </h4>
+                        </section>
+                    ) : (
+                        <>
+                            {updateData ? (
+                                <>
+                                    <section className="flex flex-column">
+                                        <label htmlFor="cpf">CPF</label>
+                                        <InputText
+                                            value={cpfValue}
+                                            className="border-2 border-500 border-round-md p-2 text-900"
+                                            id="cpf"
+                                            placeholder="000.000.000-00"
+                                            {...createData("cpf")}
+                                            disabled
+                                        />
+                                        <Button
+                                            label="Pesquisar"
+                                            type="button"
+                                            className="w-full mt-1 mb-1 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700"
+                                            onClick={searchCPF}
+                                            disabled
+                                        ></Button>
+                                    </section>
 
-                    <section className="flex flex-column">
-                        <label htmlFor="cpf">CPF</label>
-                        <InputMask
-                            className="border-2 border-500 border-round-md p-2 text-900"
-                            id="cpf"
-                            placeholder="000.000.000-00"
-                            mask="999.999.999-99"
-                            {...createData("cpf")}
-                            onBlur={(e) => setCpfValue(e.target.value)}
-                        />
+                                    <section className="flex flex-column mt-1">
+                                        <label htmlFor="name">
+                                            Nome do(a) visitante
+                                        </label>
+                                        <InputText
+                                            value={
+                                                cpfExists
+                                                    ? visitorData?.nome
+                                                    : ""
+                                            }
+                                            className="border-2 border-500 border-round-md p-2 text-900"
+                                            placeholder="Nome"
+                                            {...createData("name")}
+                                        />
+                                    </section>
+
+                                    <section className="flex flex-column mt-1">
+                                        <label htmlFor="job">Profissão</label>
+                                        <InputText
+                                            value={
+                                                cpfExists
+                                                    ? visitorData?.profissao
+                                                    : ""
+                                            }
+                                            className="border-2 border-500 border-round-md p-2 text-900"
+                                            placeholder="Sua Profissão, caso esteja empregado"
+                                            {...createData("job")}
+                                        />
+                                    </section>
+
+                                    <section className="flex flex-column mt-1">
+                                        <label htmlFor="cep">CEP</label>
+                                        <InputText
+                                            value={
+                                                cpfExists
+                                                    ? visitorData?.cep
+                                                    : ""
+                                            }
+                                            className="border-2 border-500 border-round-md p-2 text-900"
+                                            placeholder="00000-000"
+                                            {...createData("cep")}
+                                        />
+                                    </section>
+
+                                    <section className="flex justify-content-center gap-4 mt-1">
+                                        <div>
+                                            <section className="flex flex-column">
+                                                <label htmlFor="gender">
+                                                    Gênero
+                                                </label>
+                                                <Dropdown
+                                                    value={
+                                                        cpfExists
+                                                            ? selectedGender
+                                                            : null
+                                                    }
+                                                    onChange={(e) => {
+                                                        setSelectedGender(
+                                                            e.target.value
+                                                        );
+                                                        createValue(
+                                                            "gender",
+                                                            e.target.value
+                                                        );
+                                                    }}
+                                                    options={genders}
+                                                    optionLabel="gender"
+                                                    optionValue="value"
+                                                    placeholder="Selecione um Gênero"
+                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
+                                                    pt={{
+                                                        root: {
+                                                            className:
+                                                                "w-full md:w-14rem",
+                                                        },
+                                                        item: {
+                                                            className:
+                                                                "bg-white p-2 text-sm text-600 transition-duration-200 hover:text-900",
+                                                        },
+                                                        list: {
+                                                            className:
+                                                                "border-200 border-3 border-round-lg",
+                                                        },
+                                                    }}
+                                                />
+                                            </section>
+                                            <section className="flex flex-column">
+                                                <label htmlFor="age">
+                                                    Data de Nascimento
+                                                </label>
+                                                <InputText
+                                                    className="focus:border-transparent h-3rem border-2 border-500 border-round-md p-2 mb-2 text-900"
+                                                    {...createData("dataDeNascimento")}
+                                                    min={1}
+                                                />
+                                            </section>
+                                        </div>
+
+                                        <div>
+                                            <section className="flex flex-column">
+                                                <label htmlFor="city">
+                                                    Cidade
+                                                </label>
+                                                <InputText
+                                                    value={
+                                                        cpfExists
+                                                            ? visitorData?.cidade
+                                                            : ""
+                                                    }
+                                                    {...createData("city")}
+                                                    placeholder="Digite sua Cidade"
+                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
+                                                />
+                                            </section>
+                                            <section className="flex flex-column">
+                                                <label htmlFor="block">
+                                                    Bairro
+                                                </label>
+                                                <InputText
+                                                    value={
+                                                        cpfExists
+                                                            ? visitorData?.bairro
+                                                            : ""
+                                                    }
+                                                    {...createData("block")}
+                                                    placeholder="Digite seu bairro"
+                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
+                                                />
+                                            </section>
+                                        </div>
+                                    </section>
+                                </>
+                            ) : (
+                                <>
+                                    <section className="flex flex-column">
+                                        <label htmlFor="cpf">CPF</label>
+                                        <InputText
+                                            value={cpfValue}
+                                            className="border-2 border-500 border-round-md p-2 text-900"
+                                            id="cpf"
+                                            placeholder="000.000.000-00"
+                                            {...createData("cpf")}
+                                            disabled
+                                        />
+                                        <Button
+                                            label="Pesquisar"
+                                            type="button"
+                                            className="w-full mt-1 mb-1 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700"
+                                            onClick={searchCPF}
+                                            disabled
+                                        ></Button>
+                                    </section>
+                                    <section className="flex flex-column mt-1">
+                                        <label htmlFor="name">
+                                            Nome do(a) visitante
+                                        </label>
+                                        <InputText
+                                            value={
+                                                cpfExists
+                                                    ? visitorData?.nome
+                                                    : ""
+                                            }
+                                            className="border-2 border-500 border-round-md p-2 text-900"
+                                            placeholder="Nome"
+                                            disabled
+                                            {...createData("name")}
+                                        />
+                                    </section>
+
+                                    <section className="flex flex-column mt-1">
+                                        <label htmlFor="job">Profissão</label>
+                                        <InputText
+                                            value={
+                                                cpfExists
+                                                    ? visitorData?.profissao
+                                                    : ""
+                                            }
+                                            className="border-2 border-500 border-round-md p-2 text-900"
+                                            placeholder="Sua Profissão, caso esteja empregado"
+                                            {...createData("job")}
+                                            disabled
+                                        />
+                                    </section>
+
+                                    <section className="flex flex-column mt-1">
+                                        <label htmlFor="cep">CEP</label>
+                                        <InputText
+                                            value={
+                                                cpfExists
+                                                    ? visitorData?.cep
+                                                    : ""
+                                            }
+                                            className="border-2 border-500 border-round-md p-2 text-900"
+                                            placeholder="00000-000"
+                                            {...createData("cep")}
+                                            disabled
+                                        />
+                                    </section>
+
+                                    <section className="flex justify-content-center gap-4 mt-1">
+                                        <div>
+                                            <section className="flex flex-column">
+                                                <label htmlFor="gender">
+                                                    Gênero
+                                                </label>
+                                                <Dropdown
+                                                    value={
+                                                        cpfExists
+                                                            ? selectedGender
+                                                            : null
+                                                    }
+                                                    onChange={(e) => {
+                                                        setSelectedGender(
+                                                            e.target.value
+                                                        );
+                                                        createValue(
+                                                            "gender",
+                                                            e.target.value
+                                                        );
+                                                    }}
+                                                    options={genders}
+                                                    optionLabel="gender"
+                                                    optionValue="value"
+                                                    placeholder="Selecione um Gênero"
+                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
+                                                    disabled
+                                                    pt={{
+                                                        root: {
+                                                            className:
+                                                                "w-full md:w-14rem",
+                                                        },
+                                                        item: {
+                                                            className:
+                                                                "bg-white p-2 text-sm text-600 transition-duration-200 hover:text-900",
+                                                        },
+                                                        list: {
+                                                            className:
+                                                                "border-200 border-3 border-round-lg",
+                                                        },
+                                                    }}
+                                                />
+                                            </section>
+                                            <section className="flex flex-column">
+                                                <label htmlFor="age">
+                                                    Idade
+                                                </label>
+                                                <InputText
+                                                    className="focus:border-transparent h-3rem border-2 border-500 border-round-md p-2 mb-2 text-900"
+                                                    {...createData("dataDeNascimento")}
+                                                    min={1}
+                                                    disabled
+                                                />
+                                            </section>
+                                        </div>
+
+                                        <div>
+                                            <section className="flex flex-column">
+                                                <label htmlFor="city">
+                                                    Cidade
+                                                </label>
+                                                <InputText
+                                                    value={
+                                                        cpfExists
+                                                            ? visitorData?.cidade
+                                                            : ""
+                                                    }
+                                                    {...createData("city")}
+                                                    placeholder="Digite sua Cidade"
+                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
+                                                    disabled
+                                                />
+                                            </section>
+                                            <section className="flex flex-column">
+                                                <label htmlFor="block">
+                                                    Bairro
+                                                </label>
+                                                <InputText
+                                                    value={
+                                                        cpfExists
+                                                            ? visitorData?.bairro
+                                                            : ""
+                                                    }
+                                                    {...createData("block")}
+                                                    placeholder="Digite seu bairro"
+                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
+                                                    disabled
+                                                />
+                                            </section>
+                                        </div>
+                                    </section>
+                                    <a
+                                        className="text-blue-400 hover:text-blue-600 transition-duration-200 cursor-pointer"
+                                        onClick={() => setUpdateData(true)}
+                                    >
+                                        Atualizar dados?
+                                    </a>
+                                </>
+                            )}
+                        </>
+                    )}
+                    {showForm && (
                         <Button
-                            label="Pesquisar"
-                            type="button"
-                            className="w-full mt-1 mb-1 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700"
-                            onClick={searchCPF}
+                            label="Gerar Visita"
+                            type="submit"
+                            className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700"
                         ></Button>
-                    </section>
-
-                    <section className="flex flex-column mt-1">
-                        <label htmlFor="name">Nome do(a) visitante</label>
-                        <InputText
-                            value={visitorData?.nome}
-                            className="border-2 border-500 border-round-md p-2 text-900"
-                            placeholder="Nome"
-                            {...createData("name")}
-                        />
-                    </section>
-
-                    <section className="flex flex-column mt-1">
-                        <label htmlFor="job">Profissão</label>
-                        <InputText
-                            value={visitorData?.profissao}
-                            className="border-2 border-500 border-round-md p-2 text-900"
-                            placeholder="Sua Profissão, caso esteja empregado"
-                            {...createData("job")}
-                        />
-                    </section>
-
-                    <section className="flex flex-column mt-1">
-                        <label htmlFor="cep">CEP</label>
-                        <InputMask
-                            value={visitorData?.cep}
-                            className="border-2 border-500 border-round-md p-2 text-900"
-                            placeholder="Digite seu CEP"
-                            mask="99999-999"
-                            {...createData("cep")}
-                        />
-                    </section>
-
-                    <section className="flex justify-content-center gap-4 mt-1">
-                        <div>
-                            <section className="flex flex-column">
-                                <label htmlFor="gender">Gênero</label>
-                                <Dropdown
-                                    value={selectedGender}
-                                    onChange={(e) => {
-                                        setSelectedGender(e.target.value);
-                                        createValue("gender", e.target.value);
-                                    }}
-                                    options={genders}
-                                    optionLabel="gender"
-                                    optionValue="value"
-                                    placeholder="Selecione um Gênero"
-                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
-                                    pt={{
-                                        root: {
-                                            className: "w-full md:w-14rem",
-                                        },
-                                        item: {
-                                            className:
-                                                "bg-white p-2 text-sm text-600 transition-duration-200 hover:text-900",
-                                        },
-                                        list: {
-                                            className:
-                                                "border-200 border-3 border-round-lg",
-                                        },
-                                    }}
-                                />
-                            </section>
-                            <section className="flex flex-column">
-                                <label htmlFor="age">Idade</label>
-                                <InputText
-                                    className="focus:border-transparent h-3rem border-2 border-500 border-round-md p-2 mb-2 text-900"
-                                    {...createData("age")}
-                                    min={1}
-                                />
-                            </section>
-                        </div>
-
-                        <div>
-                            <section className="flex flex-column">
-                                <label htmlFor="city">Cidade</label>
-                                <InputText
-                                    value={visitorData?.cidade}
-                                    {...createData("city")}
-                                    placeholder="Digite sua Cidade"
-                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
-                                />
-                            </section>
-                            <section className="flex flex-column">
-                                <label htmlFor="block">Bairro</label>
-                                <InputText
-                                    value={visitorData?.bairro}
-                                    {...createData("block")}
-                                    placeholder="Digite seu bairro"
-                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
-                                />
-                            </section>
-                        </div>
-                    </section>
-                    <Button
-                        label="Enviar"
-                        type="submit"
-                        className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700"
-                        onClick={() => setModal(true)}
-                    ></Button>
+                    )}
                 </form>
                 {modal && (
                     <Dialog
