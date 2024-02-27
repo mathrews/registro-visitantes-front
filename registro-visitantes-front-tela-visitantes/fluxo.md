@@ -16,8 +16,6 @@
 
 - [ ] Fazer o tratamento de erro dos inputs da tela de cadastro do visitante e da tela de login
 
-- [ ] Fazer o db.json e suas rotas
-
 CRUD visitantes:
 - [ ] GET
 - [ ] POST
