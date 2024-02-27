@@ -14,12 +14,16 @@ const schema = yup
     .object({
         name: yup.string().required().uppercase(),
         job: yup.string(),
-        cpf: yup.string().required(),
+        cpf: yup.string(),
         cep: yup.string().required(),
-        gender: yup.number().required(),
+        gender: yup.number(),
         dataDeNascimento: yup.string(),
         city: yup.string().required(),
         block: yup.string(),
+        endereco: yup.string(),
+        numero: yup.string(),
+        uf: yup.string(),
+        complemento: yup.string()
     })
     .required();
 
@@ -30,8 +34,8 @@ interface visitor {
     dataNascimento: string;
     profissao: string;
     endereco: string;
-    numero: number;
-    complemento: number;
+    numero: string;
+    complemento: string;
     bairro: string;
     cidade: string;
     uf: string;
@@ -40,6 +44,7 @@ interface visitor {
 }
 
 const PageVisitantes = () => {
+    const [cpfValue, setCpfValue] = useState<string>("");
     const [modal, setModal] = useState<boolean>(false);
     const [selectedGender, setSelectedGender] = useState<number>(0);
     const genders = [
@@ -65,22 +70,16 @@ const PageVisitantes = () => {
     } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
-            name: visitorData ? visitorData.nome : "",
-            job: visitorData ? visitorData.profissao : "",
-            cep: visitorData ? visitorData.cep : "",
-            cpf: visitorData ? visitorData.cpf : "",
+            cpf: cpfValue,
             gender: selectedGender,
-            dataDeNascimento: "",
-            city: visitorData ? visitorData.cidade : "",
-            block: visitorData ? visitorData.bairro : "",
         },
     });
     const createDataPost = (data: object) => {
-        console.log(data);
+        const formData = { ...data, cpf: cpfValue };
+        console.log(formData);
     };
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [cpfValue, setCpfValue] = useState<string>("");
     const [errorMessageCpf, setErrorMessageCpf] = useState<string>();
     const [showForm, setShowForm] = useState<boolean>(false);
     const [cpfExists, setCpfExists] = useState<boolean>(false);
@@ -93,9 +92,10 @@ const PageVisitantes = () => {
                         .replaceAll(".", "")}`
                 )
             ).data;
-            if (!response) {
+            if (!response[0]) {
                 setShowForm(true);
             } else {
+                console.log(response);
                 setShowForm(true);
                 setCpfExists(true);
                 if (response[0]) {
@@ -111,20 +111,23 @@ const PageVisitantes = () => {
 
     useEffect(() => {
         if (visitorData) {
-            createValue('name', visitorData.nome);
-            createValue('job', visitorData.profissao);
-            createValue('cep', visitorData.cep);
-            createValue('cpf', visitorData.cpf);
-            createValue('gender', visitorData.genero_id);
-            createValue('dataDeNascimento', visitorData.dataNascimento);
-            createValue('city', visitorData.cidade);
-            createValue('block', visitorData.bairro);
+            createValue("name", visitorData.nome);
+            createValue("job", visitorData.profissao);
+            createValue("cep", visitorData.cep);
+            createValue("gender", visitorData.genero_id);
+            createValue("dataDeNascimento", visitorData.dataNascimento);
+            createValue("city", visitorData.cidade);
+            createValue("block", visitorData.bairro);
+            createValue("complemento", visitorData.complemento);
+            createValue("endereco", visitorData.endereco);
+            createValue("uf", visitorData.uf);
+            createValue("numero", visitorData.numero);
         }
     }, [visitorData, createValue]);
 
     return (
         <>
-            <main className="surface-500 w-full h-screen flex justify-content-center align-items-center">
+            <main className="surface-500 w-full p-6 flex justify-content-center align-items-center">
                 <form
                     className="p-5 bg-white border-round-md"
                     onSubmit={handleSubmit(createDataPost)}
@@ -145,7 +148,7 @@ const PageVisitantes = () => {
                             <Button
                                 label="Pesquisar"
                                 type="button"
-                                className="w-full mt-1 mb-1 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700"
+                                className="w-full mt-3 mb-1 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700"
                                 onClick={searchCPF}
                             ></Button>
                             <p className="block text-center mb-1">
@@ -160,7 +163,7 @@ const PageVisitantes = () => {
                         </section>
                     ) : (
                         <>
-                            {updateData ? (
+                            {updateData == true || cpfExists == false ? (
                                 <>
                                     <section className="flex flex-column">
                                         <label htmlFor="cpf">CPF</label>
@@ -172,13 +175,6 @@ const PageVisitantes = () => {
                                             {...createData("cpf")}
                                             disabled
                                         />
-                                        <Button
-                                            label="Pesquisar"
-                                            type="button"
-                                            className="w-full mt-1 mb-1 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700"
-                                            onClick={searchCPF}
-                                            disabled
-                                        ></Button>
                                     </section>
 
                                     <section className="flex flex-column mt-1">
@@ -186,11 +182,6 @@ const PageVisitantes = () => {
                                             Nome do(a) visitante
                                         </label>
                                         <InputText
-                                            value={
-                                                cpfExists
-                                                    ? visitorData?.nome
-                                                    : ""
-                                            }
                                             className="border-2 border-500 border-round-md p-2 text-900"
                                             placeholder="Nome"
                                             {...createData("name")}
@@ -200,11 +191,6 @@ const PageVisitantes = () => {
                                     <section className="flex flex-column mt-1">
                                         <label htmlFor="job">Profissão</label>
                                         <InputText
-                                            value={
-                                                cpfExists
-                                                    ? visitorData?.profissao
-                                                    : ""
-                                            }
                                             className="border-2 border-500 border-round-md p-2 text-900"
                                             placeholder="Sua Profissão, caso esteja empregado"
                                             {...createData("job")}
@@ -214,14 +200,20 @@ const PageVisitantes = () => {
                                     <section className="flex flex-column mt-1">
                                         <label htmlFor="cep">CEP</label>
                                         <InputText
-                                            value={
-                                                cpfExists
-                                                    ? visitorData?.cep
-                                                    : ""
-                                            }
                                             className="border-2 border-500 border-round-md p-2 text-900"
                                             placeholder="00000-000"
                                             {...createData("cep")}
+                                        />
+                                    </section>
+
+                                    <section className="flex flex-column mt-1">
+                                        <label htmlFor="endereco">
+                                            Endereço
+                                        </label>
+                                        <InputText
+                                            className="border-2 border-500 border-round-md p-2 text-900"
+                                            placeholder="Digite seu endereço"
+                                            {...createData("endereco")}
                                         />
                                     </section>
 
@@ -232,11 +224,7 @@ const PageVisitantes = () => {
                                                     Gênero
                                                 </label>
                                                 <Dropdown
-                                                    value={
-                                                        cpfExists
-                                                            ? selectedGender
-                                                            : null
-                                                    }
+                                                    value={selectedGender}
                                                     onChange={(e) => {
                                                         setSelectedGender(
                                                             e.target.value
@@ -250,7 +238,7 @@ const PageVisitantes = () => {
                                                     optionLabel="gender"
                                                     optionValue="value"
                                                     placeholder="Selecione um Gênero"
-                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
+                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
                                                     pt={{
                                                         root: {
                                                             className:
@@ -268,31 +256,46 @@ const PageVisitantes = () => {
                                                 />
                                             </section>
                                             <section className="flex flex-column">
-                                                <label htmlFor="age">
-                                                    Data de Nascimento
+                                                <label htmlFor="numero">
+                                                    Numero
                                                 </label>
                                                 <InputText
-                                                    className="focus:border-transparent h-3rem border-2 border-500 border-round-md p-2 mb-2 text-900"
-                                                    {...createData("dataDeNascimento")}
-                                                    min={1}
+                                                    {...createData("numero")}
+                                                    placeholder="Digite seu numero"
+                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
+                                                />
+                                            </section>
+                                            <section className="flex flex-column">
+                                                <label htmlFor="uf">UF</label>
+                                                <InputText
+                                                    {...createData("uf")}
+                                                    placeholder="Digite sua unidade federal"
+                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
                                                 />
                                             </section>
                                         </div>
 
                                         <div>
                                             <section className="flex flex-column">
+                                                <label htmlFor="age">
+                                                    Data de Nascimento
+                                                </label>
+                                                <InputText
+                                                    className="focus:border-transparent h-3rem border-2 border-500 border-round-md p-2 mb-2 text-900"
+                                                    {...createData(
+                                                        "dataDeNascimento"
+                                                    )}
+                                                    min={1}
+                                                />
+                                            </section>
+                                            <section className="flex flex-column">
                                                 <label htmlFor="city">
                                                     Cidade
                                                 </label>
                                                 <InputText
-                                                    value={
-                                                        cpfExists
-                                                            ? visitorData?.cidade
-                                                            : ""
-                                                    }
                                                     {...createData("city")}
                                                     placeholder="Digite sua Cidade"
-                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
+                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
                                                 />
                                             </section>
                                             <section className="flex flex-column">
@@ -300,17 +303,22 @@ const PageVisitantes = () => {
                                                     Bairro
                                                 </label>
                                                 <InputText
-                                                    value={
-                                                        cpfExists
-                                                            ? visitorData?.bairro
-                                                            : ""
-                                                    }
                                                     {...createData("block")}
                                                     placeholder="Digite seu bairro"
-                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
+                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
                                                 />
                                             </section>
                                         </div>
+                                    </section>
+                                    <section className="flex flex-column mb-2">
+                                        <label htmlFor="complemento">
+                                            complemento
+                                        </label>
+                                        <InputText
+                                            className="border-2 border-500 border-round-md p-2 text-900"
+                                            placeholder="Digite o complemento"
+                                            {...createData("complemento")}
+                                        />
                                     </section>
                                 </>
                             ) : (
@@ -325,24 +333,12 @@ const PageVisitantes = () => {
                                             {...createData("cpf")}
                                             disabled
                                         />
-                                        <Button
-                                            label="Pesquisar"
-                                            type="button"
-                                            className="w-full mt-1 mb-1 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700"
-                                            onClick={searchCPF}
-                                            disabled
-                                        ></Button>
                                     </section>
                                     <section className="flex flex-column mt-1">
                                         <label htmlFor="name">
                                             Nome do(a) visitante
                                         </label>
                                         <InputText
-                                            value={
-                                                cpfExists
-                                                    ? visitorData?.nome
-                                                    : ""
-                                            }
                                             className="border-2 border-500 border-round-md p-2 text-900"
                                             placeholder="Nome"
                                             disabled
@@ -353,11 +349,6 @@ const PageVisitantes = () => {
                                     <section className="flex flex-column mt-1">
                                         <label htmlFor="job">Profissão</label>
                                         <InputText
-                                            value={
-                                                cpfExists
-                                                    ? visitorData?.profissao
-                                                    : ""
-                                            }
                                             className="border-2 border-500 border-round-md p-2 text-900"
                                             placeholder="Sua Profissão, caso esteja empregado"
                                             {...createData("job")}
@@ -368,14 +359,21 @@ const PageVisitantes = () => {
                                     <section className="flex flex-column mt-1">
                                         <label htmlFor="cep">CEP</label>
                                         <InputText
-                                            value={
-                                                cpfExists
-                                                    ? visitorData?.cep
-                                                    : ""
-                                            }
                                             className="border-2 border-500 border-round-md p-2 text-900"
                                             placeholder="00000-000"
                                             {...createData("cep")}
+                                            disabled
+                                        />
+                                    </section>
+
+                                    <section className="flex flex-column mt-1">
+                                        <label htmlFor="endereco">
+                                            Endereço
+                                        </label>
+                                        <InputText
+                                            className="border-2 border-500 border-round-md p-2 text-900"
+                                            placeholder="Digite seu endereço"
+                                            {...createData("endereco")}
                                             disabled
                                         />
                                     </section>
@@ -387,11 +385,7 @@ const PageVisitantes = () => {
                                                     Gênero
                                                 </label>
                                                 <Dropdown
-                                                    value={
-                                                        cpfExists
-                                                            ? selectedGender
-                                                            : null
-                                                    }
+                                                    value={selectedGender}
                                                     onChange={(e) => {
                                                         setSelectedGender(
                                                             e.target.value
@@ -405,7 +399,7 @@ const PageVisitantes = () => {
                                                     optionLabel="gender"
                                                     optionValue="value"
                                                     placeholder="Selecione um Gênero"
-                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
+                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
                                                     disabled
                                                     pt={{
                                                         root: {
@@ -424,13 +418,22 @@ const PageVisitantes = () => {
                                                 />
                                             </section>
                                             <section className="flex flex-column">
-                                                <label htmlFor="age">
-                                                    Idade
+                                                <label htmlFor="numero">
+                                                    Numero
                                                 </label>
                                                 <InputText
-                                                    className="focus:border-transparent h-3rem border-2 border-500 border-round-md p-2 mb-2 text-900"
-                                                    {...createData("dataDeNascimento")}
-                                                    min={1}
+                                                    {...createData("numero")}
+                                                    placeholder="Digite seu numero"
+                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
+                                                    disabled
+                                                />
+                                            </section>
+                                            <section className="flex flex-column">
+                                                <label htmlFor="uf">UF</label>
+                                                <InputText
+                                                    {...createData("uf")}
+                                                    placeholder="Digite sua unidade federal"
+                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
                                                     disabled
                                                 />
                                             </section>
@@ -438,18 +441,26 @@ const PageVisitantes = () => {
 
                                         <div>
                                             <section className="flex flex-column">
+                                                <label htmlFor="age">
+                                                    Data de Nascimento
+                                                </label>
+                                                <InputText
+                                                    className="focus:border-transparent h-3rem border-2 border-500 border-round-md p-2 mb-2 text-900"
+                                                    {...createData(
+                                                        "dataDeNascimento"
+                                                    )}
+                                                    min={1}
+                                                    disabled
+                                                />
+                                            </section>
+                                            <section className="flex flex-column">
                                                 <label htmlFor="city">
                                                     Cidade
                                                 </label>
                                                 <InputText
-                                                    value={
-                                                        cpfExists
-                                                            ? visitorData?.cidade
-                                                            : ""
-                                                    }
                                                     {...createData("city")}
                                                     placeholder="Digite sua Cidade"
-                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
+                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
                                                     disabled
                                                 />
                                             </section>
@@ -458,18 +469,24 @@ const PageVisitantes = () => {
                                                     Bairro
                                                 </label>
                                                 <InputText
-                                                    value={
-                                                        cpfExists
-                                                            ? visitorData?.bairro
-                                                            : ""
-                                                    }
                                                     {...createData("block")}
                                                     placeholder="Digite seu bairro"
-                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-3 text-900"
+                                                    className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
                                                     disabled
                                                 />
                                             </section>
                                         </div>
+                                    </section>
+                                    <section className="flex flex-column mb-2">
+                                        <label htmlFor="complemento">
+                                            complemento
+                                        </label>
+                                        <InputText
+                                            className="border-2 border-500 border-round-md p-2 text-900"
+                                            placeholder="Digite o complemento"
+                                            {...createData("complemento")}
+                                            disabled
+                                        />
                                     </section>
                                     <a
                                         className="text-blue-400 hover:text-blue-600 transition-duration-200 cursor-pointer"
@@ -486,6 +503,7 @@ const PageVisitantes = () => {
                             label="Gerar Visita"
                             type="submit"
                             className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700"
+                            onClick={() => setModal(true)}
                         ></Button>
                     )}
                 </form>
