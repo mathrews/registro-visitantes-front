@@ -8,12 +8,14 @@ import { queryClient } from "./service";
 
 function App() {
     const [isLogged, setIsLogged] = useState<boolean>(true);
+    const [token, setToken] = useState<string>();
+    
 
     return (
         <>
             <QueryClientProvider client={queryClient}>
                 <PrimeReactProvider>
-                    <AuthContext.Provider value={{ isLogged, setIsLogged }}>
+                    <AuthContext.Provider value={{ isLogged, setIsLogged, token, setToken }}>
                         <Ways />
                     </AuthContext.Provider>
                 </PrimeReactProvider>

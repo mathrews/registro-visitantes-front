@@ -23,7 +23,7 @@ const schema = yup
         endereco: yup.string(),
         numero: yup.string(),
         uf: yup.string(),
-        complemento: yup.string()
+        complemento: yup.string(),
     })
     .required();
 
@@ -79,6 +79,9 @@ const PageVisitantes = () => {
         console.log(formData);
     };
 
+    // const config = {
+    //     headers: { Authorization: `Bearer ${token}` },
+    // };
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [errorMessageCpf, setErrorMessageCpf] = useState<string>();
     const [showForm, setShowForm] = useState<boolean>(false);
@@ -89,7 +92,8 @@ const PageVisitantes = () => {
                 await API.get(
                     `visitante/cpf/${cpfValue
                         .replaceAll("-", "")
-                        .replaceAll(".", "")}`
+                        .replaceAll(".", "")}`,
+                    
                 )
             ).data;
             if (!response[0]) {
