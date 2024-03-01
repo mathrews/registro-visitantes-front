@@ -1,14 +1,71 @@
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { useForm } from "react-hook-form";
+import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { API } from "../../../service";
+import { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../../../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+
+const schema = yup
+    .object({
+        login: yup.string().required(),
+        senha: yup.string().required(),
+    })
+    .required();
 
 const PageLogin = () => {
+    useEffect(() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("isLogged");
+    }, []);
 
-    const {
-        register: loginData,
-        handleSubmit,
-    } = useForm();
-    const onSubmit = (data: object) => console.log(data);
+    const { register: loginData, handleSubmit } = useForm({
+        defaultValues: {
+            login: "",
+            senha: "",
+        },
+        resolver: yupResolver(schema),
+    });
+
+    const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const { setIsLogged, setToken } = useContext(AuthContext);
+    const [erroLogin, setErroLogin] = useState<boolean>(false);
+    const onSubmit = async (data: object) => {
+        setIsLoading(true)
+        try {
+            const response = await API({
+                method: "post",
+                url: "/usuario/login",
+                data: data,
+            });
+
+            const { token, type, message } = response.data;
+
+            if (type === "warning") {
+                setErroLogin(true);
+                localStorage.removeItem("token");
+                setIsLoading(false);
+                return message;
+            } else if (type === "sucesso") {
+                setErroLogin(false);
+                setToken(token);
+                setIsLogged(true);
+                
+                localStorage.setItem("token", token);
+                localStorage.setItem("isLogged", "true");
+                setIsLoading(false);
+                
+                navigate("/visitantes");
+            }
+        } catch (error) {
+            console.error("Erro ao realizar login:", error);
+            // Trate o erro de acordo com suas necessidades
+            return "Ocorreu um erro ao tentar fazer login.";
+        }
+    };
 
     return (
         <>
@@ -19,26 +76,33 @@ const PageLogin = () => {
                 >
                     <h1 className="block text-center text-3xl mb-3">Login</h1>
                     <section className="flex flex-column mb-3">
-                        <label htmlFor="user">Usuário</label>
+                        <label htmlFor="login">Usuário</label>
                         <InputText
                             className="border-2 border-500 border-round-md p-2 text-900"
-                            {...loginData("user", { required: true })}
+                            placeholder="Digite seu nome de usuário"
+                            {...loginData("login")}
                         />
                     </section>
 
                     <section className="flex flex-column mb-3">
-                        <label htmlFor="password">Senha</label>
+                        <label htmlFor="senha">Senha</label>
                         <InputText
                             className="border-2 border-500 border-round-md p-2 text-900"
-                            {...loginData("password", { required: true })}
+                            placeholder="Digite sua senha. Ela deve conter entre 8 a 12 caracteres"
+                            {...loginData("senha")}
                         />
+                        <p className="text-900"></p>
+                        <h4 className="block text-center mb-1 text-red-400">
+                            {erroLogin ? "Login ou senha inválidos!" : ""}
+                        </h4>
                     </section>
 
                     <Button
-                        label="Enviar"
                         type="submit"
-                        className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold"
-                    ></Button>
+                        className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold flex justify-content-center align-items-center"
+                    >
+                        {isLoading == false ? ("Enviar") : (<i className="pi pi-spin pi-spinner" style={{ fontSize: '1rem' }}></i>)}
+                    </Button>
                 </form>
             </main>
         </>

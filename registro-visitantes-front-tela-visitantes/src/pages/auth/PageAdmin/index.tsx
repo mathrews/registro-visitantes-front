@@ -26,6 +26,8 @@ const TelaAdminContainer = styled.section`
         gap: 16px;
         flex-wrap: wrap;
         margin-top: 1.5em;
+        border-radius: 6px;
+        padding: 16px;
         & div {
             width: calc(70% - 16px);
             padding: 16px;
@@ -274,11 +276,11 @@ const PageAdmin = () => {
     return (
         <>
             <TelaAdminContainer>
-                <h1>
+                <h1 className="text-white">
                     Dashboard
                     <PdfDownloader />
                 </h1>
-                <div className="graficos">
+                <div className="graficos bg-white">
                     <div>
                         <h4>Visitantes</h4>
                         <Chart
