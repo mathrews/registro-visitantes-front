@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { API } from "../../../service";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
@@ -16,6 +16,11 @@ const schema = yup
     .required();
 
 const PageLogin = () => {
+    useEffect(() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("isLogged");
+    }, []);
+
     const { register: loginData, handleSubmit } = useForm({
         defaultValues: {
             login: "",
@@ -24,32 +29,41 @@ const PageLogin = () => {
         resolver: yupResolver(schema),
     });
 
-    // const config = {
-    //     headers: { Authorization: `Bearer ${token}` },
-    // };
-    
     const navigate = useNavigate();
-    const { setIsLogged, setToken, isLogged, token } = useContext(AuthContext);
-    const [erroLogin, setErroLogin]  = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const { setIsLogged, setToken } = useContext(AuthContext);
+    const [erroLogin, setErroLogin] = useState<boolean>(false);
     const onSubmit = async (data: object) => {
-        console.log(data);
-        const response = (
-            await API({
+        setIsLoading(true)
+        try {
+            const response = await API({
                 method: "post",
                 url: "/usuario/login",
                 data: data,
-            })
-        ).data;
-        console.log(response);
-        if (response.type == "warning") {
-            setErroLogin(true);
-            return response.message;
-        } else if (response.type == "sucesso") {
-            setErroLogin(false);
-            setIsLogged(true);
-            setToken(response.token);
-            console.log(token);
-            return navigate("/visitantes")
+            });
+
+            const { token, type, message } = response.data;
+
+            if (type === "warning") {
+                setErroLogin(true);
+                localStorage.removeItem("token");
+                setIsLoading(false);
+                return message;
+            } else if (type === "sucesso") {
+                setErroLogin(false);
+                setToken(token);
+                setIsLogged(true);
+                
+                localStorage.setItem("token", token);
+                localStorage.setItem("isLogged", "true");
+                setIsLoading(false);
+                
+                navigate("/visitantes");
+            }
+        } catch (error) {
+            console.error("Erro ao realizar login:", error);
+            // Trate o erro de acordo com suas necessidades
+            return "Ocorreu um erro ao tentar fazer login.";
         }
     };
 
@@ -84,10 +98,11 @@ const PageLogin = () => {
                     </section>
 
                     <Button
-                        label="Enviar"
                         type="submit"
-                        className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold"
-                    ></Button>
+                        className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold flex justify-content-center align-items-center"
+                    >
+                        {isLoading == false ? ("Enviar") : (<i className="pi pi-spin pi-spinner" style={{ fontSize: '1rem' }}></i>)}
+                    </Button>
                 </form>
             </main>
         </>

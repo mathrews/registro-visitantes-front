@@ -276,7 +276,7 @@ const PageAdmin = () => {
     return (
         <>
             <TelaAdminContainer>
-                <h1>
+                <h1 className="text-white">
                     Dashboard
                     <PdfDownloader />
                 </h1>

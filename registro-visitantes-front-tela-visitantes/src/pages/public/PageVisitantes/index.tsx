@@ -62,6 +62,11 @@ const PageVisitantes = () => {
         },
     ];
 
+    const config = {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    };
+    const [isLoadingSubmit, setIsLoadingSubmit] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const [visitorData, setVisitorData] = useState<visitor>();
     const {
         register: createData,
@@ -75,40 +80,42 @@ const PageVisitantes = () => {
         },
     });
     const createDataPost = (data: object) => {
+        setIsLoadingSubmit(true)
         const formData = { ...data, cpf: cpfValue };
         console.log(formData);
+        setIsLoadingSubmit(false)
     };
 
-    // const config = {
-    //     headers: { Authorization: `Bearer ${token}` },
-    // };
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [errorMessageCpf, setErrorMessageCpf] = useState<string>();
     const [showForm, setShowForm] = useState<boolean>(false);
     const [cpfExists, setCpfExists] = useState<boolean>(false);
     const searchCPF = async () => {
         if (validarCPF(cpfValue)) {
+            setIsLoading(true);
             const response = (
                 await API.get(
                     `visitante/cpf/${cpfValue
                         .replaceAll("-", "")
                         .replaceAll(".", "")}`,
-                    
+                    config
                 )
             ).data;
             if (!response[0]) {
                 setShowForm(true);
+                setIsLoading(false);
             } else {
-                console.log(response);
                 setShowForm(true);
                 setCpfExists(true);
                 if (response[0]) {
                     setSelectedGender(response[0].genero_id);
                     setVisitorData(response[0]);
+                    setIsLoading(false);
                 }
+                setIsLoading(false);
             }
         } else {
             setErrorMessageCpf("Este CPF é invalido, tente novamente!");
+            setIsLoading(false);
         }
     };
     const [updateData, setUpdateData] = useState<boolean>(false);
@@ -150,11 +157,19 @@ const PageVisitantes = () => {
                                 onBlur={(e) => setCpfValue(e.target.value)}
                             />
                             <Button
-                                label="Pesquisar"
                                 type="button"
-                                className="w-full mt-3 mb-1 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700"
+                                className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700 flex justify-content-center align-items-center"
                                 onClick={searchCPF}
-                            ></Button>
+                            >
+                                {isLoading == false ? (
+                                    "Pesquisar"
+                                ) : (
+                                    <i
+                                        className="pi pi-spin pi-spinner"
+                                        style={{ fontSize: "1rem" }}
+                                    ></i>
+                                )}
+                            </Button>
                             <p className="block text-center mb-1">
                                 Se você já estiver visitado o museu, o
                                 formulário aprentará seus dados já previos,
@@ -286,10 +301,10 @@ const PageVisitantes = () => {
                                                 </label>
                                                 <InputText
                                                     className="focus:border-transparent h-3rem border-2 border-500 border-round-md p-2 mb-2 text-900"
+                                                    placeholder="00-00-0000"
                                                     {...createData(
                                                         "dataDeNascimento"
                                                     )}
-                                                    min={1}
                                                 />
                                             </section>
                                             <section className="flex flex-column">
@@ -314,6 +329,7 @@ const PageVisitantes = () => {
                                             </section>
                                         </div>
                                     </section>
+
                                     <section className="flex flex-column mb-2">
                                         <label htmlFor="complemento">
                                             complemento
@@ -481,6 +497,7 @@ const PageVisitantes = () => {
                                             </section>
                                         </div>
                                     </section>
+                                    
                                     <section className="flex flex-column mb-2">
                                         <label htmlFor="complemento">
                                             complemento
@@ -504,11 +521,19 @@ const PageVisitantes = () => {
                     )}
                     {showForm && (
                         <Button
-                            label="Gerar Visita"
                             type="submit"
-                            className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700"
+                            className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700 flex justify-content-center align-items-center"
                             onClick={() => setModal(true)}
-                        ></Button>
+                        >
+                            {isLoadingSubmit == false ? (
+                                "Enviar"
+                            ) : (
+                                <i
+                                    className="pi pi-spin pi-spinner"
+                                    style={{ fontSize: "1rem" }}
+                                ></i>
+                            )}
+                        </Button>
                     )}
                 </form>
                 {modal && (
