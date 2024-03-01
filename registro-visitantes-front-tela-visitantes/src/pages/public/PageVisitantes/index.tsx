@@ -44,8 +44,11 @@ interface visitor {
 }
 
 const PageVisitantes = () => {
+
     const [cpfValue, setCpfValue] = useState<string>("");
+
     const [modal, setModal] = useState<boolean>(false);
+
     const [selectedGender, setSelectedGender] = useState<number>(0);
     const genders = [
         {
@@ -65,9 +68,11 @@ const PageVisitantes = () => {
     const config = {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     };
+
     const [isLoadingSubmit, setIsLoadingSubmit] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [visitorData, setVisitorData] = useState<visitor>();
+
     const {
         register: createData,
         handleSubmit,
@@ -79,6 +84,7 @@ const PageVisitantes = () => {
             gender: selectedGender,
         },
     });
+
     const createDataPost = (data: object) => {
         setIsLoadingSubmit(true)
         const formData = { ...data, cpf: cpfValue };
@@ -118,6 +124,7 @@ const PageVisitantes = () => {
             setIsLoading(false);
         }
     };
+    
     const [updateData, setUpdateData] = useState<boolean>(false);
 
     useEffect(() => {
