@@ -44,7 +44,6 @@ interface visitor {
 }
 
 const PageVisitantes = () => {
-
     const [cpfValue, setCpfValue] = useState<string>("");
 
     const [modal, setModal] = useState<boolean>(false);
@@ -66,7 +65,7 @@ const PageVisitantes = () => {
     ];
 
     const config = {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
     };
 
     const [isLoadingSubmit, setIsLoadingSubmit] = useState<boolean>(false);
@@ -86,10 +85,10 @@ const PageVisitantes = () => {
     });
 
     const createDataPost = (data: object) => {
-        setIsLoadingSubmit(true)
+        setIsLoadingSubmit(true);
         const formData = { ...data, cpf: cpfValue };
         console.log(formData);
-        setIsLoadingSubmit(false)
+        setIsLoadingSubmit(false);
     };
 
     const [errorMessageCpf, setErrorMessageCpf] = useState<string>();
@@ -124,7 +123,7 @@ const PageVisitantes = () => {
             setIsLoading(false);
         }
     };
-    
+
     const [updateData, setUpdateData] = useState<boolean>(false);
 
     useEffect(() => {
@@ -191,6 +190,9 @@ const PageVisitantes = () => {
                         <>
                             {updateData == true || cpfExists == false ? (
                                 <>
+                                    <h3 className="block text-center text-3xl mb-3">
+                                        Cadastre-se pela primeira vez!
+                                    </h3>
                                     <section className="flex flex-column">
                                         <label htmlFor="cpf">CPF</label>
                                         <InputText
@@ -504,7 +506,7 @@ const PageVisitantes = () => {
                                             </section>
                                         </div>
                                     </section>
-                                    
+
                                     <section className="flex flex-column mb-2">
                                         <label htmlFor="complemento">
                                             complemento
