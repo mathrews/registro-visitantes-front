@@ -46,8 +46,6 @@ interface visitor {
 const PageVisitantes = () => {
     const [cpfValue, setCpfValue] = useState<string>("");
 
-    const [modal, setModal] = useState<boolean>(false);
-
     const [selectedGender, setSelectedGender] = useState<number>(0);
     const genders = [
         {
@@ -141,6 +139,8 @@ const PageVisitantes = () => {
             createValue("numero", visitorData.numero);
         }
     }, [visitorData, createValue]);
+
+    const [modal, setModal] = useState<boolean>(false);
 
     return (
         <>
