@@ -16,7 +16,7 @@ const schema = yup
         job: yup.string(),
         cpf: yup.string(),
         cep: yup.string().required(),
-        gender: yup.number(),
+        gender: yup.number().required(),
         dataDeNascimento: yup.string(),
         city: yup.string().required(),
         block: yup.string(),
@@ -529,20 +529,29 @@ const PageVisitantes = () => {
                         </>
                     )}
                     {showForm && (
-                        <Button
-                            type="submit"
-                            className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700 flex justify-content-center align-items-center"
-                            onClick={() => setModal(true)}
-                        >
+                        <>
                             {isLoadingSubmit == false ? (
-                                "Enviar"
+                                <Button
+                                    type="submit"
+                                    className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700 flex justify-content-center align-items-center"
+                                    onClick={() => setModal(true)}
+                                >
+                                    Enviar
+                                </Button>
                             ) : (
-                                <i
-                                    className="pi pi-spin pi-spinner"
-                                    style={{ fontSize: "1rem" }}
-                                ></i>
+                                <Button
+                                    type="submit"
+                                    className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700 flex justify-content-center align-items-center"
+                                    onClick={() => setModal(true)}
+                                    disabled
+                                >
+                                    <i
+                                        className="pi pi-spin pi-spinner"
+                                        style={{ fontSize: "1rem" }}
+                                    ></i>
+                                </Button>
                             )}
-                        </Button>
+                        </>
                     )}
                 </form>
                 {modal && (

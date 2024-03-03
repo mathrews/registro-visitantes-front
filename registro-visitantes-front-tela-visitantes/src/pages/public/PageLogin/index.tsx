@@ -97,20 +97,25 @@ const PageLogin = () => {
                             {erroLogin ? "Login ou senha inválidos!" : ""}
                         </h4>
                     </section>
-
-                    <Button
-                        type="submit"
-                        className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold flex justify-content-center align-items-center"
-                    >
-                        {isLoading == false ? (
-                            "Enviar"
-                        ) : (
+                    {isLoading == false ? (
+                        <Button
+                            type="submit"
+                            className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold flex justify-content-center align-items-center"
+                        >
+                            Enviar
+                        </Button>
+                    ) : (
+                        <Button
+                            type="submit"
+                            className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold flex justify-content-center align-items-center"
+                            disabled
+                        >
                             <i
                                 className="pi pi-spin pi-spinner"
                                 style={{ fontSize: "1rem" }}
                             ></i>
-                        )}
-                    </Button>
+                        </Button>
+                    )}
                 </form>
             </main>
         </>

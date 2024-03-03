@@ -5,11 +5,10 @@ import PageLogin from "../pages/public/PageLogin";
 import PageAdmin from "../pages/auth/PageAdmin";
 import Page404 from "../pages/public/Page404";
 
-
 const Ways = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ProtectedRoute = ({ children }: any) => {
-        const isLogged = sessionStorage.getItem("isLogged")
+        const isLogged = sessionStorage.getItem("isLogged");
         return isLogged == "true" ? children : <Navigate to={"/"} />;
     };
 
