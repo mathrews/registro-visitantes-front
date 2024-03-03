@@ -5,8 +5,8 @@ import "./index.css";
 const HeaderComponent = () => {
     const navigate = useNavigate();
     const logout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("isLogged");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("isLogged");
         return navigate("/");
     };
     return (
@@ -14,7 +14,7 @@ const HeaderComponent = () => {
             <header className="bg-green-300 flex p-4 justify-content-between align-items-center">
                 <div>
                     <h1 className="text-white">Museu da Arte</h1>
-                    {localStorage.getItem("isLogged") == "true" ? (
+                    {sessionStorage.getItem("isLogged") == "true" ? (
                         <nav className="navigator">
                             <ul className="flex gap-3">
                                 <li>
@@ -23,7 +23,7 @@ const HeaderComponent = () => {
                                     </NavLink>
                                 </li>
                                 <li>
-                                    <NavLink to="/admin">admin</NavLink>
+                                    <NavLink to="/admin">Admin</NavLink>
                                 </li>
                             </ul>
                         </nav>
@@ -32,7 +32,7 @@ const HeaderComponent = () => {
                     )}
                 </div>
                 <div className="flex gap-4">
-                    {localStorage.getItem("isLogged") == "true" ? (
+                    {sessionStorage.getItem("isLogged") == "true" ? (
                         <a
                             className="text-white hover:text-600 transition-duration-200 cursor-pointer flex justify-content-center align-items-center gap-1"
                             onClick={logout}

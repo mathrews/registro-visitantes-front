@@ -26,3 +26,4 @@ export const validarCPF = (cpf: string) => {
     }
     return true;
 }
+
