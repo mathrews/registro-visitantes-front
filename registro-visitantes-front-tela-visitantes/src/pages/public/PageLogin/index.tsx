@@ -7,7 +7,6 @@ import { API } from "../../../service";
 import { useContext, useState } from "react";
 import { AuthContext } from "../../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { hashMD5 } from "../../../utils/hashMD5";
 
 const schema = yup
     .object({
@@ -40,7 +39,7 @@ const PageLogin = () => {
             const response = await API({
                 method: "post",
                 url: "/usuario/login",
-                data: { ...data, senha: hashMD5(data.senha) },
+                data: data,
             });
 
             const { token, type, message } = response.data;
@@ -90,6 +89,7 @@ const PageLogin = () => {
                         <InputText
                             className="border-2 border-500 border-round-md p-2 text-900"
                             placeholder="Digite sua senha. Ela deve conter entre 8 a 12 caracteres"
+                            type="password"
                             {...loginData("senha")}
                         />
                         <p className="text-900"></p>

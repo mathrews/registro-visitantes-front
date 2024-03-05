@@ -1,4 +1,3 @@
-import { useForm } from "react-hook-form";
 import { InputText } from "primereact/inputtext";
 import { InputMask } from "primereact/inputmask";
 import { Dropdown } from "primereact/dropdown";
@@ -9,6 +8,8 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { Dialog } from "primereact/dialog";
 import { API } from "../../../service";
 import { validarCPF } from "../../../utils/validateCPF";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
 
 const schema = yup
     .object({
@@ -45,6 +46,7 @@ interface visitor {
 
 const PageVisitantes = () => {
     const [cpfValue, setCpfValue] = useState<string>("");
+    const navigate = useNavigate();
 
     const [selectedGender, setSelectedGender] = useState<number>(0);
     const genders = [
@@ -72,7 +74,7 @@ const PageVisitantes = () => {
 
     const {
         register: createData,
-        handleSubmit,
+        handleSubmit: createSubmit,
         setValue: createValue,
     } = useForm({
         resolver: yupResolver(schema),
@@ -82,13 +84,6 @@ const PageVisitantes = () => {
         },
     });
 
-    const createDataPost = (data: object) => {
-        setIsLoadingSubmit(true);
-        const formData = { ...data, cpf: cpfValue };
-        console.log(formData);
-        setIsLoadingSubmit(false);
-    };
-
     const [errorMessageCpf, setErrorMessageCpf] = useState<string>();
     const [showForm, setShowForm] = useState<boolean>(false);
     const [cpfExists, setCpfExists] = useState<boolean>(false);
@@ -97,7 +92,7 @@ const PageVisitantes = () => {
             setIsLoading(true);
             const response = (
                 await API.get(
-                    `visitante/cpf/${cpfValue
+                    `/visitante/cpf/${cpfValue
                         .replaceAll("-", "")
                         .replaceAll(".", "")}`,
                     config
@@ -121,6 +116,47 @@ const PageVisitantes = () => {
             setIsLoading(false);
         }
     };
+
+    const createDataPost = async (data: object) => {
+        setIsLoadingSubmit(true);
+        if (cpfExists) {
+            try {
+                if (visitorData) {
+                    const dataAtual = new Date(); // Obtem a data atual
+                    const formattedDate = `${dataAtual
+                        .getDate()
+                        .toString()
+                        .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
+                        .toString()
+                        .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+
+                    const visitaResponse = await API.post(
+                        "/visita",
+                        {
+                            visitante_id: visitorData?.id,
+                            data: formattedDate,
+                        },
+                        config
+                    );
+                    setIsLoadingSubmit(false);
+                    return visitaResponse;
+                } else {
+                    throw new Error(
+                        "ID do visitante não encontrado na resposta da API."
+                    );
+                }
+            } catch (error) {
+                setIsLoadingSubmit(false);
+                console.log((error as Error).message);
+            }
+        } else {
+            const formData = { ...data, cpf: cpfValue };
+            console.log(formData);
+        }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const updateDataPut = (data: object) => {};
 
     const [updateData, setUpdateData] = useState<boolean>(false);
 
@@ -147,7 +183,9 @@ const PageVisitantes = () => {
             <main className="surface-500 w-full p-6 flex justify-content-center align-items-center">
                 <form
                     className="p-5 bg-white border-round-md"
-                    onSubmit={handleSubmit(createDataPost)}
+                    onSubmit={createSubmit(
+                        updateData ? updateDataPut : createDataPost
+                    )}
                 >
                     <h1 className="block text-center text-3xl mb-3">
                         Seja bem-vindo(a) visitante!
@@ -572,10 +610,15 @@ const PageVisitantes = () => {
                             },
                             closeButtonIcon: {
                                 className: "w-1rem h-1rem",
+                                onClick: () => {
+                                    navigate("/visitantes");
+                                },
                             },
                         }}
                     >
-                        <h1 className="m-0">Cadastro concluído com sucesso!</h1>
+                        <h1>
+                            Visita cadastrada!
+                        </h1>
                     </Dialog>
                 )}
             </main>
