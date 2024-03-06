@@ -13,14 +13,14 @@ import { useForm } from "react-hook-form";
 
 const schema = yup
     .object({
-        name: yup.string().required().uppercase(),
-        job: yup.string(),
+        nome: yup.string().required().uppercase(),
+        profissao: yup.string(),
         cpf: yup.string(),
         cep: yup.string().required(),
-        gender: yup.number().required(),
-        dataDeNascimento: yup.string(),
-        city: yup.string().required(),
-        block: yup.string(),
+        genero_id: yup.number().required(),
+        dataNascimento: yup.string(),
+        cidade: yup.string().required(),
+        bairro: yup.string(),
         endereco: yup.string(),
         numero: yup.string(),
         uf: yup.string(),
@@ -81,7 +81,7 @@ const PageVisitantes = () => {
         resolver: yupResolver(schema),
         defaultValues: {
             cpf: cpfValue,
-            gender: selectedGender,
+            genero_id: selectedGender,
         },
     });
 
@@ -118,6 +118,7 @@ const PageVisitantes = () => {
         }
     };
 
+    const [errorCreate, setErrorCreate] = useState<string>("");
     const createDataPost = async (data: object) => {
         setIsLoadingSubmit(true);
         if (cpfExists) {
@@ -155,13 +156,47 @@ const PageVisitantes = () => {
                 console.log((error as Error).message);
             }
         } else {
-            const formData = { ...data, cpf: cpfValue };
-            console.log(formData);
-            createReset();
-            setShowForm(false);
-            setCpfExists(false);
-            setUpdateData(false);
-            setIsLoadingSubmit(false);
+            try {
+                const formData = { ...data, cpf: cpfValue };
+                const response = await API.post("/visitante", formData, config);
+                if (response.data.type == "sucesso") {
+                    const request = await API.get(
+                        `/visitante/cpf/${response.data.cpf
+                            .replaceAll("-", "")
+                            .replaceAll(".", "")}`,
+                        config
+                    );
+                    const dataAtual = new Date();
+                    const formattedDate = `${dataAtual
+                        .getDate()
+                        .toString()
+                        .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
+                        .toString()
+                        .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+
+                    const visitaResponse = await API.post(
+                        "/visita",
+                        {
+                            visitante_id: request.data?.id,
+                            data: formattedDate,
+                        },
+                        config
+                    );
+
+                    createReset();
+                    setShowForm(false);
+                    setIsLoadingSubmit(false);
+                    setUpdateData(false);
+                    setCpfExists(false);
+                    return visitaResponse;
+                } else {
+                    setIsLoadingSubmit(false);
+                    setErrorCreate(response.data.message);
+                }
+            } catch (error) {
+                console.log((error as Error).message);
+                setIsLoadingSubmit(false);
+            }
         }
     };
 
@@ -172,13 +207,13 @@ const PageVisitantes = () => {
 
     useEffect(() => {
         if (visitorData) {
-            createValue("name", visitorData.nome);
-            createValue("job", visitorData.profissao);
+            createValue("nome", visitorData.nome);
+            createValue("profissao", visitorData.profissao);
             createValue("cep", visitorData.cep);
-            createValue("gender", visitorData.genero_id);
-            createValue("dataDeNascimento", visitorData.dataNascimento);
-            createValue("city", visitorData.cidade);
-            createValue("block", visitorData.bairro);
+            createValue("genero_id", visitorData.genero_id);
+            createValue("dataNascimento", visitorData.dataNascimento);
+            createValue("cidade", visitorData.cidade);
+            createValue("bairro", visitorData.bairro);
             createValue("complemento", visitorData.complemento);
             createValue("endereco", visitorData.endereco);
             createValue("uf", visitorData.uf);
@@ -251,22 +286,24 @@ const PageVisitantes = () => {
                                     </section>
 
                                     <section className="flex flex-column mt-1">
-                                        <label htmlFor="name">
+                                        <label htmlFor="nome">
                                             Nome do(a) visitante
                                         </label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
                                             placeholder="Nome"
-                                            {...createData("name")}
+                                            {...createData("nome")}
                                         />
                                     </section>
 
                                     <section className="flex flex-column mt-1">
-                                        <label htmlFor="job">Profissão</label>
+                                        <label htmlFor="profissao">
+                                            Profissão
+                                        </label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
                                             placeholder="Sua Profissão, caso esteja empregado"
-                                            {...createData("job")}
+                                            {...createData("profissao")}
                                         />
                                     </section>
 
@@ -293,7 +330,7 @@ const PageVisitantes = () => {
                                     <section className="flex justify-content-center gap-4 mt-1">
                                         <div>
                                             <section className="flex flex-column">
-                                                <label htmlFor="gender">
+                                                <label htmlFor="genero_id">
                                                     Gênero
                                                 </label>
                                                 <Dropdown
@@ -303,7 +340,7 @@ const PageVisitantes = () => {
                                                             e.target.value
                                                         );
                                                         createValue(
-                                                            "gender",
+                                                            "genero_id",
                                                             e.target.value
                                                         );
                                                     }}
@@ -350,33 +387,33 @@ const PageVisitantes = () => {
 
                                         <div>
                                             <section className="flex flex-column">
-                                                <label htmlFor="age">
+                                                <label htmlFor="dataNascimento">
                                                     Data de Nascimento
                                                 </label>
                                                 <InputText
                                                     className="focus:border-transparent h-3rem border-2 border-500 border-round-md p-2 mb-2 text-900"
-                                                    placeholder="00-00-0000"
+                                                    placeholder="00/00/0000"
                                                     {...createData(
-                                                        "dataDeNascimento"
+                                                        "dataNascimento"
                                                     )}
                                                 />
                                             </section>
                                             <section className="flex flex-column">
-                                                <label htmlFor="city">
+                                                <label htmlFor="cidade">
                                                     Cidade
                                                 </label>
                                                 <InputText
-                                                    {...createData("city")}
+                                                    {...createData("cidade")}
                                                     placeholder="Digite sua Cidade"
                                                     className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
                                                 />
                                             </section>
                                             <section className="flex flex-column">
-                                                <label htmlFor="block">
+                                                <label htmlFor="bairro">
                                                     Bairro
                                                 </label>
                                                 <InputText
-                                                    {...createData("block")}
+                                                    {...createData("bairro")}
                                                     placeholder="Digite seu bairro"
                                                     className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
                                                 />
@@ -409,23 +446,25 @@ const PageVisitantes = () => {
                                         />
                                     </section>
                                     <section className="flex flex-column mt-1">
-                                        <label htmlFor="name">
+                                        <label htmlFor="nome">
                                             Nome do(a) visitante
                                         </label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
                                             placeholder="Nome"
                                             disabled
-                                            {...createData("name")}
+                                            {...createData("nome")}
                                         />
                                     </section>
 
                                     <section className="flex flex-column mt-1">
-                                        <label htmlFor="job">Profissão</label>
+                                        <label htmlFor="profissao">
+                                            Profissão
+                                        </label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
                                             placeholder="Sua Profissão, caso esteja empregado"
-                                            {...createData("job")}
+                                            {...createData("profissao")}
                                             disabled
                                         />
                                     </section>
@@ -455,7 +494,7 @@ const PageVisitantes = () => {
                                     <section className="flex justify-content-center gap-4 mt-1">
                                         <div>
                                             <section className="flex flex-column">
-                                                <label htmlFor="gender">
+                                                <label htmlFor="genero_id">
                                                     Gênero
                                                 </label>
                                                 <Dropdown
@@ -465,7 +504,7 @@ const PageVisitantes = () => {
                                                             e.target.value
                                                         );
                                                         createValue(
-                                                            "gender",
+                                                            "genero_id",
                                                             e.target.value
                                                         );
                                                     }}
@@ -515,35 +554,35 @@ const PageVisitantes = () => {
 
                                         <div>
                                             <section className="flex flex-column">
-                                                <label htmlFor="age">
+                                                <label htmlFor="dataNascimento">
                                                     Data de Nascimento
                                                 </label>
                                                 <InputText
                                                     className="focus:border-transparent h-3rem border-2 border-500 border-round-md p-2 mb-2 text-900"
                                                     {...createData(
-                                                        "dataDeNascimento"
+                                                        "dataNascimento"
                                                     )}
                                                     min={1}
                                                     disabled
                                                 />
                                             </section>
                                             <section className="flex flex-column">
-                                                <label htmlFor="city">
+                                                <label htmlFor="cidade">
                                                     Cidade
                                                 </label>
                                                 <InputText
-                                                    {...createData("city")}
+                                                    {...createData("cidade")}
                                                     placeholder="Digite sua Cidade"
                                                     className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
                                                     disabled
                                                 />
                                             </section>
                                             <section className="flex flex-column">
-                                                <label htmlFor="block">
+                                                <label htmlFor="bairro">
                                                     Bairro
                                                 </label>
                                                 <InputText
-                                                    {...createData("block")}
+                                                    {...createData("bairro")}
                                                     placeholder="Digite seu bairro"
                                                     className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
                                                     disabled
@@ -623,7 +662,18 @@ const PageVisitantes = () => {
                             },
                         }}
                     >
-                        <h1>Visita cadastrada!</h1>
+                        {isLoadingSubmit ? (
+                            <i
+                                className="pi pi-spin pi-spinner"
+                                style={{ fontSize: "2rem" }}
+                            ></i>
+                        ) : (
+                            <h1>
+                                {errorCreate == ""
+                                    ? "Visita cadastrada!"
+                                    : "Houve erro no cadastro, reclame no SAC."}
+                            </h1>
+                        )}
                     </Dialog>
                 )}
             </main>
