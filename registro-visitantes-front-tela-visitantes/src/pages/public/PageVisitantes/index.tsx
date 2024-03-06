@@ -76,6 +76,7 @@ const PageVisitantes = () => {
         register: createData,
         handleSubmit: createSubmit,
         setValue: createValue,
+        reset: createReset,
     } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
@@ -139,6 +140,10 @@ const PageVisitantes = () => {
                         config
                     );
                     setIsLoadingSubmit(false);
+                    createReset();
+                    setShowForm(false);
+                    setCpfExists(false);
+                    setUpdateData(false);
                     return visitaResponse;
                 } else {
                     throw new Error(
@@ -152,6 +157,11 @@ const PageVisitantes = () => {
         } else {
             const formData = { ...data, cpf: cpfValue };
             console.log(formData);
+            createReset();
+            setShowForm(false);
+            setCpfExists(false);
+            setUpdateData(false);
+            setIsLoadingSubmit(false);
         }
     };
 
@@ -187,8 +197,8 @@ const PageVisitantes = () => {
                         updateData ? updateDataPut : createDataPost
                     )}
                 >
-                    <h1 className="block text-center text-3xl mb-3">
-                        Seja bem-vindo(a) visitante!
+                    <h1 className="flex justify-content-center align-items-center text-3xl mb-3 gap-3">
+                        Seja bem vindo(a) visitante!
                     </h1>
                     {!showForm ? (
                         <section className="flex flex-column">
@@ -228,9 +238,6 @@ const PageVisitantes = () => {
                         <>
                             {updateData == true || cpfExists == false ? (
                                 <>
-                                    <h3 className="block text-center text-3xl mb-3">
-                                        Cadastre-se pela primeira vez!
-                                    </h3>
                                     <section className="flex flex-column">
                                         <label htmlFor="cpf">CPF</label>
                                         <InputText
@@ -616,9 +623,7 @@ const PageVisitantes = () => {
                             },
                         }}
                     >
-                        <h1>
-                            Visita cadastrada!
-                        </h1>
+                        <h1>Visita cadastrada!</h1>
                     </Dialog>
                 )}
             </main>
