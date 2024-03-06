@@ -70,7 +70,7 @@ const PageVisitantes = () => {
 
     const [isLoadingSubmit, setIsLoadingSubmit] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [visitorData, setVisitorData] = useState<visitor>();
+    const [visitorData, setVisitorData] = useState<visitor | null>();
 
     const {
         register: createData,
@@ -142,6 +142,8 @@ const PageVisitantes = () => {
                     );
                     setIsLoadingSubmit(false);
                     createReset();
+                    setSelectedGender(0);
+                    setVisitorData(null);
                     setShowForm(false);
                     setCpfExists(false);
                     setUpdateData(false);
