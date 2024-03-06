@@ -203,7 +203,9 @@ const PageVisitantes = () => {
     };
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const updateDataPut = (data: object) => {};
+    const updateDataPut = (data: object) => {
+        
+    };
 
     const [updateData, setUpdateData] = useState<boolean>(false);
 
