@@ -364,7 +364,7 @@ const PageVisitantes = () => {
                                         <label htmlFor="cep">CEP</label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
-                                            placeholder="00000-000"
+                                            placeholder="00000000"
                                             {...createData("cep")}
                                         />
                                     </section>
@@ -526,7 +526,7 @@ const PageVisitantes = () => {
                                         <label htmlFor="cep">CEP</label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
-                                            placeholder="00000-000"
+                                            placeholder="00000000"
                                             {...createData("cep")}
                                             disabled
                                         />

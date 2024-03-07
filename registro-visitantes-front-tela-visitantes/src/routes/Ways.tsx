@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import PageVisitantes from "../pages/public/PageVisitantes";
+import PageVisitantes from "../pages/auth/PageVisitantes";
 import PublicLayout from "../layouts/PublicLayout";
 import PageLogin from "../pages/public/PageLogin";
 import PageAdmin from "../pages/auth/PageAdmin";
