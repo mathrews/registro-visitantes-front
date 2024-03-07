@@ -13,7 +13,7 @@ const HeaderComponent = () => {
         <>
             <header className="bg-green-300 flex p-4 justify-content-between align-items-center">
                 <div>
-                    <h1 className="text-white">Museu da Arte</h1>
+                    <h1 className="text-white mb-2">Museu da Arte</h1>
                     {sessionStorage.getItem("isLogged") == "true" ? (
                         <nav className="navigator">
                             <ul className="flex gap-3">
@@ -31,7 +31,13 @@ const HeaderComponent = () => {
                         ""
                     )}
                 </div>
-                <div className="flex gap-4">
+                <div className="flex gap-1 flex-column">
+                    
+                    <img
+                        className="h-7rem w-5rem"
+                        src={brasao}
+                        alt="Brasão estado do Ceará"
+                    />
                     {sessionStorage.getItem("isLogged") == "true" ? (
                         <a
                             className="text-white hover:text-600 transition-duration-200 cursor-pointer flex justify-content-center align-items-center gap-1"
@@ -46,11 +52,6 @@ const HeaderComponent = () => {
                     ) : (
                         ""
                     )}
-                    <img
-                        className="h-7rem w-5rem"
-                        src={brasao}
-                        alt="Brasão estado do Ceará"
-                    />
                 </div>
             </header>
         </>

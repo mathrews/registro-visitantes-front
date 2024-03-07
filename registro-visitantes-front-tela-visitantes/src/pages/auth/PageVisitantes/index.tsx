@@ -1,4 +1,3 @@
-import { useForm } from "react-hook-form";
 import { InputText } from "primereact/inputtext";
 import { InputMask } from "primereact/inputmask";
 import { Dropdown } from "primereact/dropdown";
@@ -9,17 +8,19 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { Dialog } from "primereact/dialog";
 import { API } from "../../../service";
 import { validarCPF } from "../../../utils/validateCPF";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
 
 const schema = yup
     .object({
-        name: yup.string().required().uppercase(),
-        job: yup.string(),
+        nome: yup.string().required().uppercase(),
+        profissao: yup.string(),
         cpf: yup.string(),
         cep: yup.string().required(),
-        gender: yup.number(),
-        dataDeNascimento: yup.string(),
-        city: yup.string().required(),
-        block: yup.string(),
+        genero_id: yup.number().required(),
+        dataNascimento: yup.string(),
+        cidade: yup.string().required(),
+        bairro: yup.string(),
         endereco: yup.string(),
         numero: yup.string(),
         uf: yup.string(),
@@ -44,7 +45,9 @@ interface visitor {
 }
 
 const PageVisitantes = () => {
+    const dataAtual = new Date(); // Obtem a data atual
     const [cpfValue, setCpfValue] = useState<string>("");
+    const navigate = useNavigate();
 
     const [selectedGender, setSelectedGender] = useState<number>(0);
     const genders = [
@@ -68,26 +71,20 @@ const PageVisitantes = () => {
 
     const [isLoadingSubmit, setIsLoadingSubmit] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [visitorData, setVisitorData] = useState<visitor>();
+    const [visitorData, setVisitorData] = useState<visitor | null>();
 
     const {
         register: createData,
-        handleSubmit,
+        handleSubmit: createSubmit,
         setValue: createValue,
+        reset: createReset,
     } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
             cpf: cpfValue,
-            gender: selectedGender,
+            genero_id: selectedGender,
         },
     });
-
-    const createDataPost = (data: object) => {
-        setIsLoadingSubmit(true);
-        const formData = { ...data, cpf: cpfValue };
-        console.log(formData);
-        setIsLoadingSubmit(false);
-    };
 
     const [errorMessageCpf, setErrorMessageCpf] = useState<string>();
     const [showForm, setShowForm] = useState<boolean>(false);
@@ -97,7 +94,7 @@ const PageVisitantes = () => {
             setIsLoading(true);
             const response = (
                 await API.get(
-                    `visitante/cpf/${cpfValue
+                    `/visitante/cpf/${cpfValue
                         .replaceAll("-", "")
                         .replaceAll(".", "")}`,
                     config
@@ -122,17 +119,147 @@ const PageVisitantes = () => {
         }
     };
 
+    const [errorCreate, setErrorCreate] = useState<boolean>(false);
+
+    const createDataPost = async (data: object) => {
+        setIsLoadingSubmit(true);
+        if (cpfExists) {
+            try {
+                if (visitorData) {
+                    const formattedDate = `${dataAtual
+                        .getDate()
+                        .toString()
+                        .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
+                        .toString()
+                        .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+
+                    const visitaResponse = await API.post(
+                        "/visita",
+                        {
+                            visitante_id: visitorData?.id,
+                            data: formattedDate,
+                        },
+                        config
+                    );
+                    setIsLoadingSubmit(false);
+                    createReset();
+                    setSelectedGender(0);
+                    setVisitorData(null);
+                    setShowForm(false);
+                    setCpfExists(false);
+                    setUpdateData(false);
+                    return visitaResponse;
+                } else {
+                    throw new Error(
+                        "ID do visitante não encontrado na resposta da API."
+                    );
+                }
+            } catch (error) {
+                setIsLoadingSubmit(false);
+                console.log((error as Error).message);
+            }
+        } else {
+            try {
+                const formData = { ...data, cpf: cpfValue };
+                const response = await API.post("/visitante", formData, config);
+                if (response.data.type == "sucesso") {
+                    const request = await API.get(
+                        `/visitante/cpf/${response.data.cpf
+                            .replaceAll("-", "")
+                            .replaceAll(".", "")}`,
+                        config
+                    );
+                    const dataAtual = new Date();
+                    const formattedDate = `${dataAtual
+                        .getDate()
+                        .toString()
+                        .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
+                        .toString()
+                        .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+
+                    const visitaResponse = await API.post(
+                        "/visita",
+                        {
+                            visitante_id: request.data?.id,
+                            data: formattedDate,
+                        },
+                        config
+                    );
+
+                    createReset();
+                    setShowForm(false);
+                    setIsLoadingSubmit(false);
+                    setUpdateData(false);
+                    setCpfExists(false);
+                    setErrorCreate(false);
+                    return visitaResponse;
+                } else {
+                    setIsLoadingSubmit(false);
+                    setErrorCreate(true);
+                }
+            } catch (error) {
+                console.log((error as Error).message);
+                setIsLoadingSubmit(false);
+            }
+        }
+    };
+
+    const [errorPut, setErrorPut] = useState<boolean>(false);
+    const updateDataPut = async (data: object) => {
+        setIsLoadingSubmit(true);
+        try {
+            const formData = { ...data, cpf: cpfValue };
+            const response = await API.put(
+                `/visitante/${visitorData?.id}`,
+                formData,
+                config
+            );
+            if (response.data.type == "sucesso") {
+                const formattedDate = `${dataAtual
+                    .getDate()
+                    .toString()
+                    .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
+                    .toString()
+                    .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+
+                const visitaResponse = await API.post(
+                    "/visita",
+                    {
+                        visitante_id: visitorData?.id,
+                        data: formattedDate,
+                    },
+                    config
+                );
+                setIsLoadingSubmit(false);
+                createReset();
+                setSelectedGender(0);
+                setVisitorData(null);
+                setCpfExists(false);
+                setUpdateData(false);
+                setShowForm(false);
+                setErrorPut(false);
+                return visitaResponse;
+            } else {
+                setIsLoadingSubmit(false);
+                setErrorPut(true);
+            }
+        } catch (error) {
+            setIsLoadingSubmit(false);
+            console.log((error as Error).message);
+        }
+    };
+
     const [updateData, setUpdateData] = useState<boolean>(false);
 
     useEffect(() => {
         if (visitorData) {
-            createValue("name", visitorData.nome);
-            createValue("job", visitorData.profissao);
+            createValue("nome", visitorData.nome);
+            createValue("profissao", visitorData.profissao);
             createValue("cep", visitorData.cep);
-            createValue("gender", visitorData.genero_id);
-            createValue("dataDeNascimento", visitorData.dataNascimento);
-            createValue("city", visitorData.cidade);
-            createValue("block", visitorData.bairro);
+            createValue("genero_id", visitorData.genero_id);
+            createValue("dataNascimento", visitorData.dataNascimento);
+            createValue("cidade", visitorData.cidade);
+            createValue("bairro", visitorData.bairro);
             createValue("complemento", visitorData.complemento);
             createValue("endereco", visitorData.endereco);
             createValue("uf", visitorData.uf);
@@ -142,15 +269,24 @@ const PageVisitantes = () => {
 
     const [modal, setModal] = useState<boolean>(false);
 
+    const errorModal = () => {
+        if (errorCreate || errorPut) {
+            return "Houve erro no processo, verifique se os dados estão sendo enviados corretamente";
+        } else {
+            return "Visita processada.";
+        }
+    };
     return (
         <>
             <main className="surface-500 w-full p-6 flex justify-content-center align-items-center">
                 <form
                     className="p-5 bg-white border-round-md"
-                    onSubmit={handleSubmit(createDataPost)}
+                    onSubmit={createSubmit(
+                        updateData ? updateDataPut : createDataPost
+                    )}
                 >
-                    <h1 className="block text-center text-3xl mb-3">
-                        Seja bem-vindo(a) visitante!
+                    <h1 className="flex justify-content-center align-items-center text-3xl mb-3 gap-3">
+                        Seja bem vindo(a) visitante!
                     </h1>
                     {!showForm ? (
                         <section className="flex flex-column">
@@ -190,9 +326,6 @@ const PageVisitantes = () => {
                         <>
                             {updateData == true || cpfExists == false ? (
                                 <>
-                                    <h3 className="block text-center text-3xl mb-3">
-                                        Cadastre-se pela primeira vez!
-                                    </h3>
                                     <section className="flex flex-column">
                                         <label htmlFor="cpf">CPF</label>
                                         <InputText
@@ -206,22 +339,24 @@ const PageVisitantes = () => {
                                     </section>
 
                                     <section className="flex flex-column mt-1">
-                                        <label htmlFor="name">
+                                        <label htmlFor="nome">
                                             Nome do(a) visitante
                                         </label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
                                             placeholder="Nome"
-                                            {...createData("name")}
+                                            {...createData("nome")}
                                         />
                                     </section>
 
                                     <section className="flex flex-column mt-1">
-                                        <label htmlFor="job">Profissão</label>
+                                        <label htmlFor="profissao">
+                                            Profissão
+                                        </label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
                                             placeholder="Sua Profissão, caso esteja empregado"
-                                            {...createData("job")}
+                                            {...createData("profissao")}
                                         />
                                     </section>
 
@@ -229,7 +364,7 @@ const PageVisitantes = () => {
                                         <label htmlFor="cep">CEP</label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
-                                            placeholder="00000-000"
+                                            placeholder="00000000"
                                             {...createData("cep")}
                                         />
                                     </section>
@@ -248,7 +383,7 @@ const PageVisitantes = () => {
                                     <section className="flex justify-content-center gap-4 mt-1">
                                         <div>
                                             <section className="flex flex-column">
-                                                <label htmlFor="gender">
+                                                <label htmlFor="genero_id">
                                                     Gênero
                                                 </label>
                                                 <Dropdown
@@ -258,7 +393,7 @@ const PageVisitantes = () => {
                                                             e.target.value
                                                         );
                                                         createValue(
-                                                            "gender",
+                                                            "genero_id",
                                                             e.target.value
                                                         );
                                                     }}
@@ -305,33 +440,33 @@ const PageVisitantes = () => {
 
                                         <div>
                                             <section className="flex flex-column">
-                                                <label htmlFor="age">
+                                                <label htmlFor="dataNascimento">
                                                     Data de Nascimento
                                                 </label>
                                                 <InputText
                                                     className="focus:border-transparent h-3rem border-2 border-500 border-round-md p-2 mb-2 text-900"
-                                                    placeholder="00-00-0000"
+                                                    placeholder="ano-mês-dia"
                                                     {...createData(
-                                                        "dataDeNascimento"
+                                                        "dataNascimento"
                                                     )}
                                                 />
                                             </section>
                                             <section className="flex flex-column">
-                                                <label htmlFor="city">
+                                                <label htmlFor="cidade">
                                                     Cidade
                                                 </label>
                                                 <InputText
-                                                    {...createData("city")}
+                                                    {...createData("cidade")}
                                                     placeholder="Digite sua Cidade"
                                                     className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
                                                 />
                                             </section>
                                             <section className="flex flex-column">
-                                                <label htmlFor="block">
+                                                <label htmlFor="bairro">
                                                     Bairro
                                                 </label>
                                                 <InputText
-                                                    {...createData("block")}
+                                                    {...createData("bairro")}
                                                     placeholder="Digite seu bairro"
                                                     className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
                                                 />
@@ -364,23 +499,25 @@ const PageVisitantes = () => {
                                         />
                                     </section>
                                     <section className="flex flex-column mt-1">
-                                        <label htmlFor="name">
+                                        <label htmlFor="nome">
                                             Nome do(a) visitante
                                         </label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
                                             placeholder="Nome"
                                             disabled
-                                            {...createData("name")}
+                                            {...createData("nome")}
                                         />
                                     </section>
 
                                     <section className="flex flex-column mt-1">
-                                        <label htmlFor="job">Profissão</label>
+                                        <label htmlFor="profissao">
+                                            Profissão
+                                        </label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
                                             placeholder="Sua Profissão, caso esteja empregado"
-                                            {...createData("job")}
+                                            {...createData("profissao")}
                                             disabled
                                         />
                                     </section>
@@ -389,7 +526,7 @@ const PageVisitantes = () => {
                                         <label htmlFor="cep">CEP</label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
-                                            placeholder="00000-000"
+                                            placeholder="00000000"
                                             {...createData("cep")}
                                             disabled
                                         />
@@ -410,7 +547,7 @@ const PageVisitantes = () => {
                                     <section className="flex justify-content-center gap-4 mt-1">
                                         <div>
                                             <section className="flex flex-column">
-                                                <label htmlFor="gender">
+                                                <label htmlFor="genero_id">
                                                     Gênero
                                                 </label>
                                                 <Dropdown
@@ -420,7 +557,7 @@ const PageVisitantes = () => {
                                                             e.target.value
                                                         );
                                                         createValue(
-                                                            "gender",
+                                                            "genero_id",
                                                             e.target.value
                                                         );
                                                     }}
@@ -470,35 +607,35 @@ const PageVisitantes = () => {
 
                                         <div>
                                             <section className="flex flex-column">
-                                                <label htmlFor="age">
+                                                <label htmlFor="dataNascimento">
                                                     Data de Nascimento
                                                 </label>
                                                 <InputText
                                                     className="focus:border-transparent h-3rem border-2 border-500 border-round-md p-2 mb-2 text-900"
                                                     {...createData(
-                                                        "dataDeNascimento"
+                                                        "dataNascimento"
                                                     )}
                                                     min={1}
                                                     disabled
                                                 />
                                             </section>
                                             <section className="flex flex-column">
-                                                <label htmlFor="city">
+                                                <label htmlFor="cidade">
                                                     Cidade
                                                 </label>
                                                 <InputText
-                                                    {...createData("city")}
+                                                    {...createData("cidade")}
                                                     placeholder="Digite sua Cidade"
                                                     className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
                                                     disabled
                                                 />
                                             </section>
                                             <section className="flex flex-column">
-                                                <label htmlFor="block">
+                                                <label htmlFor="bairro">
                                                     Bairro
                                                 </label>
                                                 <InputText
-                                                    {...createData("block")}
+                                                    {...createData("bairro")}
                                                     placeholder="Digite seu bairro"
                                                     className="w-full md:w-14rem border-2 h-3rem border-500 border-round-md p-2 flex justify-content-center align-items-center mb-2 text-900"
                                                     disabled
@@ -529,20 +666,29 @@ const PageVisitantes = () => {
                         </>
                     )}
                     {showForm && (
-                        <Button
-                            type="submit"
-                            className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700 flex justify-content-center align-items-center"
-                            onClick={() => setModal(true)}
-                        >
+                        <>
                             {isLoadingSubmit == false ? (
-                                "Enviar"
+                                <Button
+                                    type="submit"
+                                    className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700 flex justify-content-center align-items-center"
+                                    onClick={() => setModal(true)}
+                                >
+                                    Enviar
+                                </Button>
                             ) : (
-                                <i
-                                    className="pi pi-spin pi-spinner"
-                                    style={{ fontSize: "1rem" }}
-                                ></i>
+                                <Button
+                                    type="submit"
+                                    className="w-full mt-3 border-round-md h-2rem bg-green-500 font-bold transition-duration-200 hover:bg-green-700 flex justify-content-center align-items-center"
+                                    onClick={() => setModal(true)}
+                                    disabled
+                                >
+                                    <i
+                                        className="pi pi-spin pi-spinner"
+                                        style={{ fontSize: "1rem" }}
+                                    ></i>
+                                </Button>
                             )}
-                        </Button>
+                        </>
                     )}
                 </form>
                 {modal && (
@@ -563,10 +709,20 @@ const PageVisitantes = () => {
                             },
                             closeButtonIcon: {
                                 className: "w-1rem h-1rem",
+                                onClick: () => {
+                                    navigate("/visitantes");
+                                },
                             },
                         }}
                     >
-                        <h1 className="m-0">Cadastro concluído com sucesso!</h1>
+                        {isLoadingSubmit ? (
+                            <i
+                                className="pi pi-spin pi-spinner"
+                                style={{ fontSize: "2rem" }}
+                            ></i>
+                        ) : (
+                            <h1>{errorModal()}</h1>
+                        )}
                     </Dialog>
                 )}
             </main>
