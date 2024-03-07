@@ -45,6 +45,7 @@ interface visitor {
 }
 
 const PageVisitantes = () => {
+    const dataAtual = new Date(); // Obtem a data atual
     const [cpfValue, setCpfValue] = useState<string>("");
     const navigate = useNavigate();
 
@@ -118,13 +119,13 @@ const PageVisitantes = () => {
         }
     };
 
-    const [errorCreate, setErrorCreate] = useState<string>("");
+    const [errorCreate, setErrorCreate] = useState<boolean>(false);
+
     const createDataPost = async (data: object) => {
         setIsLoadingSubmit(true);
         if (cpfExists) {
             try {
                 if (visitorData) {
-                    const dataAtual = new Date(); // Obtem a data atual
                     const formattedDate = `${dataAtual
                         .getDate()
                         .toString()
@@ -190,10 +191,11 @@ const PageVisitantes = () => {
                     setIsLoadingSubmit(false);
                     setUpdateData(false);
                     setCpfExists(false);
+                    setErrorCreate(false);
                     return visitaResponse;
                 } else {
                     setIsLoadingSubmit(false);
-                    setErrorCreate(response.data.message);
+                    setErrorCreate(true);
                 }
             } catch (error) {
                 console.log((error as Error).message);
@@ -202,9 +204,49 @@ const PageVisitantes = () => {
         }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const updateDataPut = (data: object) => {
-        
+    const [errorPut, setErrorPut] = useState<boolean>(false);
+    const updateDataPut = async (data: object) => {
+        setIsLoadingSubmit(true);
+        try {
+            const formData = { ...data, cpf: cpfValue };
+            const response = await API.put(
+                `/visitante/${visitorData?.id}`,
+                formData,
+                config
+            );
+            if (response.data.type == "sucesso") {
+                const formattedDate = `${dataAtual
+                    .getDate()
+                    .toString()
+                    .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
+                    .toString()
+                    .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+
+                const visitaResponse = await API.post(
+                    "/visita",
+                    {
+                        visitante_id: visitorData?.id,
+                        data: formattedDate,
+                    },
+                    config
+                );
+                setIsLoadingSubmit(false);
+                createReset();
+                setSelectedGender(0);
+                setVisitorData(null);
+                setCpfExists(false);
+                setUpdateData(false);
+                setShowForm(false);
+                setErrorPut(false);
+                return visitaResponse;
+            } else {
+                setIsLoadingSubmit(false);
+                setErrorPut(true);
+            }
+        } catch (error) {
+            setIsLoadingSubmit(false);
+            console.log((error as Error).message);
+        }
     };
 
     const [updateData, setUpdateData] = useState<boolean>(false);
@@ -227,6 +269,13 @@ const PageVisitantes = () => {
 
     const [modal, setModal] = useState<boolean>(false);
 
+    const errorModal = () => {
+        if (errorCreate || errorPut) {
+            return "Houve erro no processo, verifique se os dados estão sendo enviados corretamente";
+        } else {
+            return "Visita processada.";
+        }
+    };
     return (
         <>
             <main className="surface-500 w-full p-6 flex justify-content-center align-items-center">
@@ -396,7 +445,7 @@ const PageVisitantes = () => {
                                                 </label>
                                                 <InputText
                                                     className="focus:border-transparent h-3rem border-2 border-500 border-round-md p-2 mb-2 text-900"
-                                                    placeholder="00/00/0000"
+                                                    placeholder="ano-mês-dia"
                                                     {...createData(
                                                         "dataNascimento"
                                                     )}
@@ -672,11 +721,7 @@ const PageVisitantes = () => {
                                 style={{ fontSize: "2rem" }}
                             ></i>
                         ) : (
-                            <h1>
-                                {errorCreate == ""
-                                    ? "Visita cadastrada!"
-                                    : "Houve erro no cadastro, reclame no SAC."}
-                            </h1>
+                            <h1>{errorModal()}</h1>
                         )}
                     </Dialog>
                 )}
