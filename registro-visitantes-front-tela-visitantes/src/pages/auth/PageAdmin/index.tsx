@@ -27,6 +27,7 @@ const TelaAdminContainer = styled.section`
         flex-wrap: wrap;
         gap: 16px;
         margin-top: 26px;
+        border-radius: 5px;
         & div {
             width: calc(70% - 16px);
             padding: 16px;
@@ -449,7 +450,7 @@ const PageAdmin = () => {
                     Dashboard
                     <PdfDownloader />
                 </h1>
-                <div className="graficos bg-white">
+                <div className="graficos bg-white ">
                     <div>
                         <h4>Visitantes por UF</h4>
                         <Chart
