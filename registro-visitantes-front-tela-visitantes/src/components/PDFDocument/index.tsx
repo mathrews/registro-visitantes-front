@@ -8,20 +8,88 @@ import {
 } from "@react-pdf/renderer";
 import brasao from "../../assets/brasao-do-ceara.png";
 import { Html } from "react-pdf-html";
+import { API } from "../../service";
+import { useState } from "react";
+
+type visitor = {
+    id: number;
+    nome: string;
+    cpf: string;
+    dataNascimento: string;
+    profissao: string;
+    endereco: string;
+    numero: string;
+    complemento: string;
+    bairro: string;
+    cidade: string;
+    uf: string;
+    cep: string;
+    genero_id: number;
+};
 
 const PDFDocument = () => {
+    const config = {
+        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
+    };
+
+    const [visitasTotais, setVisitasTotais] = useState<number>(0);
+    const [visitasTotaisMasc, setVisitasTotaisMasc] = useState<number>(0);
+    const [visitasTotaisFem, setVisitasTotaisFem] = useState<number>(0);
+    const [visitasTotaisOutros, setVisitasTotaisOutros] = useState<number>(0);
+
+    const visitasTotaisRequest = async () => {
+        try {
+            const request = await API.get("/visita", config);
+            const response = await request.data;
+
+            setVisitasTotais(response.length);
+        } catch (error) {
+            console.log((error as Error).message);
+        }
+    };
+    visitasTotaisRequest();
+
+    const visitasPorGeneroRequest = async () => {
+        try {
+            const requestQuantosPorGenero = await API.get("/visitante", config);
+            const responseQuantosPorGenero = await requestQuantosPorGenero.data;
+
+            const genders = [0, 0, 0];
+            const contarVisitantesPorGenero = () => {
+                responseQuantosPorGenero.map((item: visitor) => {
+                    if (item?.genero_id == 1) {
+                        ++genders[1];
+                    } else if (item?.genero_id == 2) {
+                        ++genders[0];
+                    } else if (item?.genero_id == 3) {
+                        ++genders[2];
+                    }
+                });
+                return genders;
+            };
+            contarVisitantesPorGenero();
+
+            setVisitasTotaisMasc(genders[0]);
+            setVisitasTotaisFem(genders[1]);
+            setVisitasTotaisOutros(genders[2]);
+        } catch (error) {
+            console.log((error as Error).message);
+        }
+    };
+    visitasPorGeneroRequest();
+
     const tabela = `<html>
             <body>
-                <table border={1}>
+                <table border={2}>
                     <tr>
                         <td>Visitantes Total</td>
-                        <td>1000</td>
+                        <td>${visitasTotais}</td>
                         <td>Visitantes Masc</td>
-                        <td>200</td>
+                        <td>${visitasTotaisMasc}</td>
                         <td>Visitantes fem</td>
-                        <td>700</td>
+                        <td>${visitasTotaisFem}</td>
                         <td>Visitantes outros</td>
-                        <td>100</td>
+                        <td>${visitasTotaisOutros}</td>
                     </tr>
                 </table>
             </body>
@@ -50,13 +118,14 @@ const PDFDocument = () => {
             fontSize: 12,
         },
     });
+
     return (
         <>
             <Document style={styles.container}>
                 <Page size={"A4"}>
                     <Image src={brasao} style={styles.bg_imagem} />
                     <View style={styles.main}>
-                        <Text>Texto</Text>
+                        <Text>Relatório</Text>
                         <Html>{tabela}</Html>
                     </View>
                 </Page>
