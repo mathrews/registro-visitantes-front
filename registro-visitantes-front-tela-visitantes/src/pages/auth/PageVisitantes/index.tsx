@@ -164,11 +164,10 @@ const PageVisitantes = () => {
                 const response = await API.post("/visitante", formData, config);
                 if (response.data.type == "sucesso") {
                     const request = await API.get(
-                        `/visitante/cpf/${response.data.cpf
-                            .replaceAll("-", "")
-                            .replaceAll(".", "")}`,
+                        `/visitante/cpf/${cpfValue}`,
                         config
                     );
+
                     const dataAtual = new Date();
                     const formattedDate = `${dataAtual
                         .getDate()
@@ -180,7 +179,7 @@ const PageVisitantes = () => {
                     const visitaResponse = await API.post(
                         "/visita",
                         {
-                            visitante_id: request.data?.id,
+                            visitante_id: request.data[0]?.id,
                             data: formattedDate,
                         },
                         config
@@ -188,6 +187,7 @@ const PageVisitantes = () => {
 
                     createReset();
                     setShowForm(false);
+                    setSelectedGender(0);
                     setIsLoadingSubmit(false);
                     setUpdateData(false);
                     setCpfExists(false);

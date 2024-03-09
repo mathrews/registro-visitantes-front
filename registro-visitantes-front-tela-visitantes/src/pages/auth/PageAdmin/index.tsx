@@ -2,43 +2,43 @@ import styled from "styled-components";
 import PdfDownloader from "../../../components/PdfDownloader";
 import { Chart } from "primereact/chart";
 import { useEffect, useState } from "react";
+import { API } from "../../../service";
 
 const TelaAdminContainer = styled.section`
-    padding: 4em;
+    padding: 60px;
     & h1 {
         display: flex;
         justify-content: space-between;
         align-items: center;
-    }
-    & a {
-        display: inline-block;
-        line-height: 3em;
-        background-color: #ff00a2;
-        padding: 0 1.5em;
-        border-radius: 6px;
-        color: white;
-        font-size: 14px;
-        text-transform: uppercase;
-        text-decoration: none;
+        & a {
+            display: inline-block;
+            line-height: 46px;
+            background-color: #ff00a2;
+            padding: 0 26px;
+            border-radius: 5px;
+            color: white;
+            font-size: 14px;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
     }
     & .graficos {
         display: flex;
-        gap: 16px;
         flex-wrap: wrap;
-        margin-top: 1.5em;
-        border-radius: 6px;
-        padding: 16px;
+        gap: 16px;
+        margin-top: 26px;
         & div {
             width: calc(70% - 16px);
             padding: 16px;
-            border-radius: 6px;
+            border-radius: 5px;
             border: 1px solid #ddd;
             &:nth-child(even) {
                 width: 30%;
             }
             & .grafico {
                 width: 100%;
-                border: none;
+                /* height: 250px; */
+                border: 0;
             }
         }
     }
@@ -55,6 +55,31 @@ type tableVisitorsYear = {
     }[];
 };
 
+type genero = {
+    nome: string;
+};
+
+type visitor = {
+    id: number;
+    nome: string;
+    cpf: string;
+    dataNascimento: string;
+    profissao: string;
+    endereco: string;
+    numero: string;
+    complemento: string;
+    bairro: string;
+    cidade: string;
+    uf: string;
+    cep: string;
+    genero_id: number;
+};
+
+type visita = {
+    visitante_id: number;
+    data: string;
+};
+
 const PageAdmin = () => {
     const [chartData, setChartData] = useState({});
     const [chartOptions, setChartOptions] = useState({});
@@ -66,86 +91,144 @@ const PageAdmin = () => {
     const [chartOptionsPieJobs, setChartOptionsPieJobs] = useState({});
 
     const [visitorsYear, setVisitorsYear] = useState<number>();
-    useEffect(() => {
-        //CONFIGURAÇÕES DO CHART BAR
 
-        const data = {
-            labels: ["Feminino", "Outros", "Masculino"],
-            datasets: [
-                {
-                    label: "Total de visitantes",
-                    data: [702, 325, 540],
-                    backgroundColor: [
-                        "rgba(255, 159, 64, 0.2)",
-                        "rgba(75, 192, 192, 0.2)",
-                        "rgba(54, 162, 235, 0.2)",
-                        "rgba(153, 102, 255, 0.2)",
-                    ],
-                    borderColor: [
-                        "rgb(255, 159, 64)",
-                        "rgb(75, 192, 192)",
-                        "rgb(54, 162, 235)",
-                        "rgb(153, 102, 255)",
-                    ],
-                    borderWidth: 1,
-                },
-            ],
-        };
-        const options = {
-            scales: {
-                y: {
-                    beginAtZero: true,
-                },
-            },
-            responsive: true,
-        };
+    const config = {
+        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
+    };
 
-        setChartData(data);
-        setChartOptions(options);
+    const visitantesPorUF = async () => {
+        try {
+            const requestQuantosPorUF = await API.get("/visitante", config);
+            const responseQuantosPorUF = await requestQuantosPorUF.data;
 
-        //CONFIGURAÇÕES DO CHART PIE
+            const contarPorUF = () => {
+                const ufs: string[] = Array.from(
+                    new Set(
+                        responseQuantosPorUF.map((item: visitor) => item?.uf)
+                    )
+                );
 
-        const dataPie = {
-            labels: ["Feminino", "Outros", "Masculino"],
-            datasets: [
-                {
-                    data: [540, 325, 702],
-                    backgroundColor: [
-                        "rgba(255, 159, 64, 0.2)",
-                        "rgba(75, 192, 192, 0.2)",
-                        "rgba(54, 162, 235, 0.2)",
-                        "rgba(153, 102, 255, 0.2)",
-                    ],
-                    borderColor: [
-                        "rgb(255, 159, 64)",
-                        "rgb(75, 192, 192)",
-                        "rgb(54, 162, 235)",
-                        "rgb(153, 102, 255)",
-                    ],
-                    hoverBackgroundColor: [
-                        "rgba(255, 159, 64, 0.2)",
-                        "rgba(75, 192, 192, 0.2)",
-                        "rgba(54, 162, 235, 0.2)",
-                        "rgba(153, 102, 255, 0.2)",
-                    ],
-                },
-            ],
-        };
-        const optionsPie = {
-            plugins: {
-                legend: {
-                    labels: {
-                        usePointStyle: true,
+                const contagemUfs: { uf: string; contagem: number }[] = ufs.map(
+                    (item: string) => ({
+                        uf: item,
+                        contagem: 0,
+                    })
+                );
+
+                responseQuantosPorUF.map((itemPriority: visitor) => {
+                    contagemUfs.map((item) => {
+                        if (item?.uf == itemPriority?.uf) {
+                            ++item.contagem;
+                        }
+                    });
+                });
+
+                return contagemUfs.map((item) => item.contagem);
+            };
+
+            const data = {
+                labels: Array.from(
+                    new Set(
+                        responseQuantosPorUF.map((item: visitor) => item?.uf)
+                    )
+                ),
+                datasets: [
+                    {
+                        label: "Total de visitantes",
+                        data: contarPorUF(),
+                        backgroundColor: [
+                            "rgba(255, 159, 64, 0.2)",
+                            "rgba(75, 192, 192, 0.2)",
+                            "rgba(54, 162, 235, 0.2)",
+                            "rgba(153, 102, 255, 0.2)",
+                        ],
+                        borderColor: [
+                            "rgb(255, 159, 64)",
+                            "rgb(75, 192, 192)",
+                            "rgb(54, 162, 235)",
+                            "rgb(153, 102, 255)",
+                        ],
+                        borderWidth: 1,
+                    },
+                ],
+            };
+
+            const options = {
+                scales: {
+                    y: {
+                        beginAtZero: true,
                     },
                 },
-            },
-        };
+                responsive: true,
+            };
 
-        setChartDataPie(dataPie);
-        setChartOptionsPie(optionsPie);
+            setChartData(data);
+            setChartOptions(options);
+        } catch (error) {
+            console.log((error as Error).message);
+        }
+    };
 
-        //CONFIG CHART LINE
+    const visitantesPorGenero = async () => {
+        try {
+            const request = await API.get("/genero", config);
+            const response = await request.data;
 
+            const requestQuantosPorGenero = await API.get("/visitante", config);
+            const responseQuantosPorGenero = await requestQuantosPorGenero.data;
+
+            const genders = [0, 0, 0];
+            const contarVisitantesPorGenero = () => {
+                responseQuantosPorGenero.map((item: visitor) => {
+                    if (item?.genero_id == 1) {
+                        ++genders[1];
+                    } else if (item?.genero_id == 2) {
+                        ++genders[0];
+                    } else if (item?.genero_id == 3) {
+                        ++genders[2];
+                    }
+                });
+                return genders;
+            };
+
+            // CONFIGURAÇÕES DO CHART PIE
+
+            const dataPie = {
+                labels: response.map((r: genero) => r.nome),
+                datasets: [
+                    {
+                        data: contarVisitantesPorGenero(),
+                        backgroundColor: [
+                            "rgba(255, 159, 64, 0.2)",
+                            "rgba(75, 192, 192, 0.2)",
+                            "rgba(54, 162, 235, 0.2)",
+                        ],
+                        borderColor: [
+                            "rgb(255, 159, 64)",
+                            "rgb(75, 192, 192)",
+                            "rgb(54, 162, 235)",
+                        ],
+                    },
+                ],
+            };
+            const optionsPie = {
+                plugins: {
+                    legend: {
+                        labels: {
+                            usePointStyle: true,
+                        },
+                    },
+                },
+            };
+
+            setChartDataPie(dataPie);
+            setChartOptionsPie(optionsPie);
+        } catch (error) {
+            console.log((error as Error).message);
+        }
+    };
+
+    const visitantesPorMês = async () => {
         const documentStyle = getComputedStyle(document.documentElement);
         const textColor = documentStyle.getPropertyValue("--text-color");
         const textColorSecondary = documentStyle.getPropertyValue(
@@ -153,36 +236,79 @@ const PageAdmin = () => {
         );
         const surfaceBorder =
             documentStyle.getPropertyValue("--surface-border");
+
+        const requestVisitasPorMes = await API.get("/visita", config);
+        const responseVisitasPorMes = await requestVisitasPorMes.data;
+        console.log(responseVisitasPorMes);
+        
+
+        const meses = [
+            "Janeiro",
+            "Fevereiro",
+            "Março",
+            "Abril",
+            "Maio",
+            "Junho",
+            "Julho",
+            "Agosto",
+            "Setembro",
+            "Outubro",
+            "Novembro",
+            "Dezembro",
+        ];
+
+        const visitantesPorMes = () => {
+            const contagem = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            responseVisitasPorMes.map((item: visita) => {
+                if (item.data.split("-")[1] == "01") {
+                    ++contagem[0];
+                }
+                if (item.data.split("-")[1] == "02") {
+                    ++contagem[1];
+                }
+                if (item.data.split("-")[1] == "03") {
+                    ++contagem[2];
+                }
+                if (item.data.split("-")[1] == "04") {
+                    ++contagem[3];
+                }
+                if (item.data.split("-")[1] == "05") {
+                    ++contagem[4];
+                }
+                if (item.data.split("-")[1] == "06") {
+                    ++contagem[5];
+                }
+                if (item.data.split("-")[1] == "07") {
+                    ++contagem[6];
+                }
+                if (item.data.split("-")[1] == "08") {
+                    ++contagem[7];
+                }
+                if (item.data.split("-")[1] == "09") {
+                    ++contagem[8];
+                }
+                if (item.data.split("-")[1] == "10") {
+                    ++contagem[9];
+                }
+                if (item.data.split("-")[1] == "11") {
+                    ++contagem[10];
+                }
+                if (item.data.split("-")[1] == "12") {
+                    ++contagem[11];
+                }
+            });
+
+            return contagem;
+        };
+
         const dataLine = {
-            labels: [
-                "January",
-                "February",
-                "March",
-                "April",
-                "May",
-                "June",
-                "July",
-            ],
+            labels: meses,
             datasets: [
                 {
-                    label: "Masculino",
-                    data: [65, 59, 80, 81, 56, 55, 40],
+                    label: "Visitantes Gerais",
+                    data: visitantesPorMes(),
                     fill: false,
                     borderColor: documentStyle.getPropertyValue("--blue-500"),
-                    tension: 0.4,
-                },
-                {
-                    label: "Feminino",
-                    data: [28, 48, 40, 19, 86, 27, 90],
-                    fill: false,
-                    borderColor: documentStyle.getPropertyValue("--pink-500"),
-                    tension: 0.4,
-                },
-                {
-                    label: "Outros",
-                    data: [54, 60, 30, 15, 13, 90, 95],
-                    fill: false,
-                    borderColor: documentStyle.getPropertyValue("--orange-500"),
                     tension: 0.4,
                 },
             ],
@@ -230,31 +356,66 @@ const PageAdmin = () => {
         allVisitorsYear(dataLine);
         setChartDataLine(dataLine);
         setChartOptionsLine(optionsLine);
+    };
 
-        //CONFIG CHART PIE EMPREGOS
+    const visitantesTopProfissao = async () => {
+        const requestProfissao = await API.get("/visitante", config);
+        const responseProfissao = await requestProfissao.data;
+
+        const contarPorProfissao = () => {
+            const profissoes: string[] = Array.from(
+                new Set(
+                    responseProfissao.map((item: visitor) => item?.profissao)
+                )
+            );
+
+            const contagemProfissoes: { profissao: string; contagem: number }[] = profissoes.map(
+                (item: string) => ({
+                    profissao: item,
+                    contagem: 0,
+                })
+            );
+
+            responseProfissao.map((itemPriority: visitor) => {
+                contagemProfissoes.map((item) => {
+                    if (item?.profissao == itemPriority?.profissao) {
+                        ++item.contagem;
+                    }
+                });
+            });
+
+            return contagemProfissoes.map((item) => item.contagem);
+        };
 
         const dataPieJobs = {
-            labels: ["Devs", "Artistas visuais", "Escultores"],
+            labels: Array.from(
+                new Set(
+                    responseProfissao.map((item: visitor) => item?.profissao)
+                )
+            ),
             datasets: [
                 {
-                    data: [540, 325, 702],
+                    data: contarPorProfissao(),
                     backgroundColor: [
                         "rgba(255, 159, 64, 0.2)",
                         "rgba(75, 192, 192, 0.2)",
                         "rgba(54, 162, 235, 0.2)",
                         "rgba(153, 102, 255, 0.2)",
+                        "rgba(232, 102, 255, 0.2)",
                     ],
                     borderColor: [
                         "rgb(255, 159, 64)",
                         "rgb(75, 192, 192)",
                         "rgb(54, 162, 235)",
                         "rgb(153, 102, 255)",
+                        "rgb(232, 102, 255)",
                     ],
                     hoverBackgroundColor: [
                         "rgba(255, 159, 64, 0.2)",
                         "rgba(75, 192, 192, 0.2)",
                         "rgba(54, 162, 235, 0.2)",
                         "rgba(153, 102, 255, 0.2)",
+                        "rgba(232, 102, 255, 0.2)",
                     ],
                 },
             ],
@@ -271,6 +432,14 @@ const PageAdmin = () => {
 
         setChartDataPieJobs(dataPieJobs);
         setChartOptionsPieJobs(optionsPieJobs);
+    };
+
+    useEffect(() => {
+        visitantesPorGenero();
+        visitantesPorUF();
+        visitantesPorMês();
+        visitantesTopProfissao();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (
@@ -282,7 +451,7 @@ const PageAdmin = () => {
                 </h1>
                 <div className="graficos bg-white">
                     <div>
-                        <h4>Visitantes</h4>
+                        <h4>Visitantes por UF</h4>
                         <Chart
                             className="grafico"
                             type="bar"
@@ -291,7 +460,7 @@ const PageAdmin = () => {
                         />
                     </div>
                     <div>
-                        <h4>Total visitantes</h4>
+                        <h4>Total de visitantes por genero</h4>
                         <Chart
                             className="grafico"
                             type="pie"
@@ -300,7 +469,7 @@ const PageAdmin = () => {
                         />
                     </div>
                     <div>
-                        <h4>Total visitantes (por mês)</h4>
+                        <h4>Total de visitas (por mês)</h4>
                         <Chart
                             className="grafico"
                             type="line"
