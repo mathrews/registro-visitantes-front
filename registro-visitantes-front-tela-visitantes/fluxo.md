@@ -14,13 +14,13 @@
 
 ## Fazer a mockagem do projeto:
 
-- [ ] Fazer o tratamento de erro dos inputs da tela de cadastro do visitante e da tela de login
+- [x] Fazer o tratamento de erro dos inputs da tela de cadastro do visitante e da tela de login
 
 CRUD visitantes:
-- [ ] GET
-- [ ] POST
-- [ ] PUT
-- [ ] DELETE
+- [x] GET
+- [x] POST
+- [x] PUT
+- [x] DELETE
 
 ## TESTES (OPCIONAL):
 
@@ -30,4 +30,14 @@ CRUD visitantes:
 
 ## CI/CD:
 
-- Fazer o deploy na Vercel
+- [x] Fazer o deploy na Vercel
+
+## Fase de Refatoração:
+
+- [ ] Fazer os campos required e as instruções dos campos de senha;
+
+- [ ] Abstrair as requests em custom hooks utilizando o react query;
+
+- [ ] Componentizar os elementos HTML utilizando de props e modularizá-los;
+
+- [ ] Colocar em utils as funções que podem ser usadas em mais de um lugar no projeto;
