@@ -37,7 +37,11 @@ CRUD visitantes:
 - [ ] Colocar em utils as funções que podem ser usadas em mais de um lugar no projeto;
 
 ## Fase design responsivo:
+- [ ] tela login
 
+- [ ] tela visitante
+
+- [ ] tela dashboard
 
 ## TESTES (OPCIONAL):
 
