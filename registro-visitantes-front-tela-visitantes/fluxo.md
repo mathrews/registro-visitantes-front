@@ -22,12 +22,6 @@ CRUD visitantes:
 - [x] PUT
 - [x] DELETE
 
-## TESTES (OPCIONAL):
-
-- [ ] testes unitários
-
-- [ ] testes end-to-end
-
 ## CI/CD:
 
 - [x] Fazer o deploy na Vercel
@@ -41,3 +35,12 @@ CRUD visitantes:
 - [ ] Componentizar os elementos HTML utilizando de props e modularizá-los;
 
 - [ ] Colocar em utils as funções que podem ser usadas em mais de um lugar no projeto;
+
+## Fase design responsivo:
+
+
+## TESTES (OPCIONAL):
+
+- [ ] testes unitários
+
+- [ ] testes end-to-end

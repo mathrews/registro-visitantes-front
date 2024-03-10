@@ -13,9 +13,9 @@ const HeaderComponent = () => {
         <>
             <header className="bg-green-300 flex p-4 justify-content-between align-items-center">
                 <div>
-                    <h1 className="text-white mb-2">Museu da Arte</h1>
+                    <h1 className="text-white">Museu da Arte</h1>
                     {sessionStorage.getItem("isLogged") == "true" ? (
-                        <nav className="navigator">
+                        <nav className="navigator mt-1">
                             <ul className="flex gap-3">
                                 <li>
                                     <NavLink to="/visitantes">
