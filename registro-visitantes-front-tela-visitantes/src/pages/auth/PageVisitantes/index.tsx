@@ -10,20 +10,21 @@ import { API } from "../../../service";
 import { validarCPF } from "../../../utils/validateCPF";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import RequiredLabel from "../../../components/RequiredLabel";
 
 const schema = yup
     .object({
         nome: yup.string().required().uppercase(),
-        profissao: yup.string(),
-        cpf: yup.string(),
+        profissao: yup.string().required(),
+        cpf: yup.string().required(),
         cep: yup.string().required(),
         genero_id: yup.number().required(),
-        dataNascimento: yup.string(),
+        dataNascimento: yup.string().required(),
         cidade: yup.string().required(),
         bairro: yup.string(),
         endereco: yup.string(),
         numero: yup.string(),
-        uf: yup.string(),
+        uf: yup.string().required(),
         complemento: yup.string(),
     })
     .required();
@@ -45,8 +46,10 @@ interface visitor {
 }
 
 const PageVisitantes = () => {
+    const config = {
+        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
+    };
     const dataAtual = new Date(); // Obtem a data atual
-    const [cpfValue, setCpfValue] = useState<string>("");
     const navigate = useNavigate();
 
     const [selectedGender, setSelectedGender] = useState<number>(0);
@@ -65,14 +68,11 @@ const PageVisitantes = () => {
         },
     ];
 
-    const config = {
-        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
-    };
-
     const [isLoadingSubmit, setIsLoadingSubmit] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [visitorData, setVisitorData] = useState<visitor | null>();
 
+    const [cpfValue, setCpfValue] = useState<string>("");
     const {
         register: createData,
         handleSubmit: createSubmit,
@@ -89,7 +89,7 @@ const PageVisitantes = () => {
     const [errorMessageCpf, setErrorMessageCpf] = useState<string>();
     const [showForm, setShowForm] = useState<boolean>(false);
     const [cpfExists, setCpfExists] = useState<boolean>(false);
-    const searchCPF = async () => {
+    const searchCPF = async () => { //refatorar
         if (validarCPF(cpfValue)) {
             setIsLoading(true);
             const response = (
@@ -121,7 +121,7 @@ const PageVisitantes = () => {
 
     const [errorCreate, setErrorCreate] = useState<boolean>(false);
 
-    const createDataPost = async (data: object) => {
+    const createDataPost = async (data: object) => { //refatorar
         setIsLoadingSubmit(true);
         if (cpfExists) {
             try {
@@ -205,7 +205,7 @@ const PageVisitantes = () => {
     };
 
     const [errorPut, setErrorPut] = useState<boolean>(false);
-    const updateDataPut = async (data: object) => {
+    const updateDataPut = async (data: object) => { //refatorar
         setIsLoadingSubmit(true);
         try {
             const formData = { ...data, cpf: cpfValue };
@@ -276,6 +276,7 @@ const PageVisitantes = () => {
             return "Visita processada.";
         }
     };
+
     return (
         <>
             <main className="surface-500 w-full p-6 flex justify-content-center align-items-center">
@@ -327,7 +328,7 @@ const PageVisitantes = () => {
                             {updateData == true || cpfExists == false ? (
                                 <>
                                     <section className="flex flex-column">
-                                        <label htmlFor="cpf">CPF</label>
+                                        <label htmlFor="cpf">CPF <RequiredLabel /></label>
                                         <InputText
                                             value={cpfValue}
                                             className="border-2 border-500 border-round-md p-2 text-900"
@@ -340,7 +341,7 @@ const PageVisitantes = () => {
 
                                     <section className="flex flex-column mt-1">
                                         <label htmlFor="nome">
-                                            Nome do(a) visitante
+                                            Nome do(a) visitante <RequiredLabel />
                                         </label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
@@ -351,7 +352,7 @@ const PageVisitantes = () => {
 
                                     <section className="flex flex-column mt-1">
                                         <label htmlFor="profissao">
-                                            Profissão
+                                            Profissão <RequiredLabel />
                                         </label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
@@ -361,7 +362,9 @@ const PageVisitantes = () => {
                                     </section>
 
                                     <section className="flex flex-column mt-1">
-                                        <label htmlFor="cep">CEP</label>
+                                        <label htmlFor="cep">
+                                            CEP <RequiredLabel />
+                                        </label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
                                             placeholder="00000000"
@@ -384,7 +387,7 @@ const PageVisitantes = () => {
                                         <div>
                                             <section className="flex flex-column">
                                                 <label htmlFor="genero_id">
-                                                    Gênero
+                                                    Gênero <RequiredLabel />
                                                 </label>
                                                 <Dropdown
                                                     value={selectedGender}
@@ -429,7 +432,7 @@ const PageVisitantes = () => {
                                                 />
                                             </section>
                                             <section className="flex flex-column">
-                                                <label htmlFor="uf">UF</label>
+                                                <label htmlFor="uf">UF <RequiredLabel /></label>
                                                 <InputText
                                                     {...createData("uf")}
                                                     placeholder="Digite sua unidade federal"
@@ -441,7 +444,7 @@ const PageVisitantes = () => {
                                         <div>
                                             <section className="flex flex-column">
                                                 <label htmlFor="dataNascimento">
-                                                    Data de Nascimento
+                                                    Data de Nascimento <RequiredLabel />
                                                 </label>
                                                 <InputText
                                                     className="focus:border-transparent h-3rem border-2 border-500 border-round-md p-2 mb-2 text-900"
@@ -453,7 +456,7 @@ const PageVisitantes = () => {
                                             </section>
                                             <section className="flex flex-column">
                                                 <label htmlFor="cidade">
-                                                    Cidade
+                                                    Cidade <RequiredLabel />
                                                 </label>
                                                 <InputText
                                                     {...createData("cidade")}

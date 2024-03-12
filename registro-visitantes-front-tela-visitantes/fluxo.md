@@ -28,9 +28,12 @@ CRUD visitantes:
 
 ## Fase de Refatoração:
 
-- [ ] Fazer os campos required e as instruções dos campos de senha;
+- [x] Fazer os campos required e as instruções dos campos de senha;
 
-- [ ] Abstrair as requests em custom hooks utilizando o react query;
+- [ ] Abstrair as requests em custom hooks utilizando o react query:
+-- pageLogin [x],
+-- pageVisitantes [],
+-- pageDashboard [];
 
 - [ ] Componentizar os elementos HTML utilizando de props e modularizá-los;
 
