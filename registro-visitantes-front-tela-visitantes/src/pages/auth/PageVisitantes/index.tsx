@@ -49,7 +49,8 @@ const PageVisitantes = () => {
     const config = {
         headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
     };
-    const dataAtual = new Date(); // Obtem a data atual
+    
+    const dataAtual = new Date();
     const navigate = useNavigate();
 
     const [selectedGender, setSelectedGender] = useState<number>(0);
@@ -89,7 +90,7 @@ const PageVisitantes = () => {
     const [errorMessageCpf, setErrorMessageCpf] = useState<string>();
     const [showForm, setShowForm] = useState<boolean>(false);
     const [cpfExists, setCpfExists] = useState<boolean>(false);
-    const searchCPF = async () => { //refatorar
+    const searchCPF = async () => {
         if (validarCPF(cpfValue)) {
             setIsLoading(true);
             const response = (
