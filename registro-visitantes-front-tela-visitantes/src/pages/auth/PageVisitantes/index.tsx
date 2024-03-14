@@ -11,20 +11,24 @@ import { validarCPF } from "../../../utils/validateCPF";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import RequiredLabel from "../../../components/RequiredLabel";
+import {
+    useVisitaCreate,
+    useVisitanteCreate,
+} from "../../../hook/useVisitantes";
 
 const schema = yup
     .object({
         nome: yup.string().required().uppercase(),
-        profissao: yup.string().required(),
-        cpf: yup.string().required(),
+        profissao: yup.string(),
+        cpf: yup.string(),
         cep: yup.string().required(),
         genero_id: yup.number().required(),
-        dataNascimento: yup.string().required(),
+        dataNascimento: yup.string(),
         cidade: yup.string().required(),
         bairro: yup.string(),
         endereco: yup.string(),
         numero: yup.string(),
-        uf: yup.string().required(),
+        uf: yup.string(),
         complemento: yup.string(),
     })
     .required();
@@ -49,7 +53,7 @@ const PageVisitantes = () => {
     const config = {
         headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
     };
-    
+
     const dataAtual = new Date();
     const navigate = useNavigate();
 
@@ -122,7 +126,9 @@ const PageVisitantes = () => {
 
     const [errorCreate, setErrorCreate] = useState<boolean>(false);
 
-    const createDataPost = async (data: object) => { //refatorar
+    const createVisita = useVisitaCreate();
+    const createVisitante = useVisitanteCreate();
+    const createDataPost = async (data: object) => {
         setIsLoadingSubmit(true);
         if (cpfExists) {
             try {
@@ -134,25 +140,29 @@ const PageVisitantes = () => {
                         .toString()
                         .padStart(2, "0")}/${dataAtual.getFullYear()}`;
 
-                    const visitaResponse = await API.post(
-                        "/visita",
+                    createVisita.mutateAsync(
                         {
                             visitante_id: visitorData?.id,
                             data: formattedDate,
                         },
-                        config
-                    );
-                    setIsLoadingSubmit(false);
-                    createReset();
-                    setSelectedGender(0);
-                    setVisitorData(null);
-                    setShowForm(false);
-                    setCpfExists(false);
-                    setUpdateData(false);
-                    return visitaResponse;
-                } else {
-                    throw new Error(
-                        "ID do visitante não encontrado na resposta da API."
+                        {
+                            onSuccess: (response) => {
+                                setIsLoadingSubmit(false);
+                                createReset();
+                                setSelectedGender(0);
+                                setVisitorData(null);
+                                setShowForm(false);
+                                setCpfExists(false);
+                                setUpdateData(false);
+                                return response;
+                            },
+                            onError: (response) => {
+                                console.log(response);
+                                throw new Error(
+                                    "ID do visitante não encontrado na resposta da API."
+                                );
+                            },
+                        }
                     );
                 }
             } catch (error) {
@@ -162,42 +172,40 @@ const PageVisitantes = () => {
         } else {
             try {
                 const formData = { ...data, cpf: cpfValue };
-                const response = await API.post("/visitante", formData, config);
-                if (response.data.type == "sucesso") {
-                    const request = await API.get(
-                        `/visitante/cpf/${cpfValue}`,
-                        config
-                    );
+                createVisitante.mutateAsync(formData, {
+                    onSuccess: async (response) => {
+                        const request = await API.get(
+                            `/visitante/cpf/${cpfValue}`,
+                            config
+                        );
 
-                    const dataAtual = new Date();
-                    const formattedDate = `${dataAtual
-                        .getDate()
-                        .toString()
-                        .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
-                        .toString()
-                        .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+                        const dataAtual = new Date();
+                        const formattedDate = `${dataAtual
+                            .getDate()
+                            .toString()
+                            .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
+                            .toString()
+                            .padStart(2, "0")}/${dataAtual.getFullYear()}`;
 
-                    const visitaResponse = await API.post(
-                        "/visita",
-                        {
+                        createVisita.mutateAsync({
                             visitante_id: request.data[0]?.id,
                             data: formattedDate,
-                        },
-                        config
-                    );
+                        });
 
-                    createReset();
-                    setShowForm(false);
-                    setSelectedGender(0);
-                    setIsLoadingSubmit(false);
-                    setUpdateData(false);
-                    setCpfExists(false);
-                    setErrorCreate(false);
-                    return visitaResponse;
-                } else {
-                    setIsLoadingSubmit(false);
-                    setErrorCreate(true);
-                }
+                        createReset();
+                        setShowForm(false);
+                        setSelectedGender(0);
+                        setIsLoadingSubmit(false);
+                        setUpdateData(false);
+                        setCpfExists(false);
+                        setErrorCreate(false);
+                        return response;
+                    },
+                    onError: () => {
+                        setIsLoadingSubmit(false);
+                        setErrorCreate(true);
+                    },
+                });
             } catch (error) {
                 console.log((error as Error).message);
                 setIsLoadingSubmit(false);
@@ -206,7 +214,8 @@ const PageVisitantes = () => {
     };
 
     const [errorPut, setErrorPut] = useState<boolean>(false);
-    const updateDataPut = async (data: object) => { //refatorar
+    const updateDataPut = async (data: object) => {
+        //refatorar
         setIsLoadingSubmit(true);
         try {
             const formData = { ...data, cpf: cpfValue };
@@ -329,7 +338,9 @@ const PageVisitantes = () => {
                             {updateData == true || cpfExists == false ? (
                                 <>
                                     <section className="flex flex-column">
-                                        <label htmlFor="cpf">CPF <RequiredLabel /></label>
+                                        <label htmlFor="cpf">
+                                            CPF <RequiredLabel />
+                                        </label>
                                         <InputText
                                             value={cpfValue}
                                             className="border-2 border-500 border-round-md p-2 text-900"
@@ -342,7 +353,8 @@ const PageVisitantes = () => {
 
                                     <section className="flex flex-column mt-1">
                                         <label htmlFor="nome">
-                                            Nome do(a) visitante <RequiredLabel />
+                                            Nome do(a) visitante{" "}
+                                            <RequiredLabel />
                                         </label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
@@ -433,7 +445,9 @@ const PageVisitantes = () => {
                                                 />
                                             </section>
                                             <section className="flex flex-column">
-                                                <label htmlFor="uf">UF <RequiredLabel /></label>
+                                                <label htmlFor="uf">
+                                                    UF <RequiredLabel />
+                                                </label>
                                                 <InputText
                                                     {...createData("uf")}
                                                     placeholder="Digite sua unidade federal"
@@ -445,7 +459,8 @@ const PageVisitantes = () => {
                                         <div>
                                             <section className="flex flex-column">
                                                 <label htmlFor="dataNascimento">
-                                                    Data de Nascimento <RequiredLabel />
+                                                    Data de Nascimento{" "}
+                                                    <RequiredLabel />
                                                 </label>
                                                 <InputText
                                                     className="focus:border-transparent h-3rem border-2 border-500 border-round-md p-2 mb-2 text-900"
