@@ -14,7 +14,10 @@ import RequiredLabel from "../../../components/RequiredLabel";
 import {
     useVisitaCreate,
     useVisitanteCreate,
+    useVisitantePut,
 } from "../../../hook/useVisitantes";
+import { logout } from "../../../utils/logout";
+import axios, { AxiosError } from "axios";
 
 const schema = yup
     .object({
@@ -156,11 +159,18 @@ const PageVisitantes = () => {
                                 setUpdateData(false);
                                 return response;
                             },
-                            onError: (response) => {
-                                console.log(response);
-                                throw new Error(
-                                    "ID do visitante não encontrado na resposta da API."
-                                );
+                            onError: (
+                                error: Error | AxiosError
+                            ): void | Promise<unknown> => {
+                                if (axios.isAxiosError(error)) {
+                                    if (error.response) {
+                                        if (error.response.status == 401) {
+                                            logout();
+                                            location.replace("/");
+                                        }
+                                    }
+                                }
+                                throw new Error("Erro na API.");
                             },
                         }
                     );
@@ -201,9 +211,20 @@ const PageVisitantes = () => {
                         setErrorCreate(false);
                         return response;
                     },
-                    onError: () => {
+                    onError: (
+                        error: Error | AxiosError
+                    ): void | Promise<unknown> => {
                         setIsLoadingSubmit(false);
                         setErrorCreate(true);
+                        if (axios.isAxiosError(error)) {
+                            if (error.response) {
+                                if (error.response.status == 401) {
+                                    logout();
+                                    location.replace("/");
+                                }
+                            }
+                        }
+                        throw new Error("Erro na API.");
                     },
                 });
             } catch (error) {
@@ -214,45 +235,57 @@ const PageVisitantes = () => {
     };
 
     const [errorPut, setErrorPut] = useState<boolean>(false);
+    const updateVisitanteData = useVisitantePut();
     const updateDataPut = async (data: object) => {
         //refatorar
         setIsLoadingSubmit(true);
         try {
-            const formData = { ...data, cpf: cpfValue };
-            const response = await API.put(
-                `/visitante/${visitorData?.id}`,
-                formData,
-                config
-            );
-            if (response.data.type == "sucesso") {
-                const formattedDate = `${dataAtual
-                    .getDate()
-                    .toString()
-                    .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
-                    .toString()
-                    .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+            const formData = { ...data, cpf: cpfValue, id: visitorData?.id };
+            updateVisitanteData.mutateAsync(formData, {
+                onSuccess: async (response) => {
+                    const request = await API.get(
+                        `/visitante/cpf/${cpfValue}`,
+                        config
+                    );
 
-                const visitaResponse = await API.post(
-                    "/visita",
-                    {
-                        visitante_id: visitorData?.id,
+                    const formattedDate = `${dataAtual
+                        .getDate()
+                        .toString()
+                        .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
+                        .toString()
+                        .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+
+                    createVisita.mutateAsync({
+                        visitante_id: request.data[0]?.id,
                         data: formattedDate,
-                    },
-                    config
-                );
-                setIsLoadingSubmit(false);
-                createReset();
-                setSelectedGender(0);
-                setVisitorData(null);
-                setCpfExists(false);
-                setUpdateData(false);
-                setShowForm(false);
-                setErrorPut(false);
-                return visitaResponse;
-            } else {
-                setIsLoadingSubmit(false);
-                setErrorPut(true);
-            }
+                    });
+
+                    setIsLoadingSubmit(false);
+                    createReset();
+                    setSelectedGender(0);
+                    setVisitorData(null);
+                    setCpfExists(false);
+                    setUpdateData(false);
+                    setShowForm(false);
+                    setErrorPut(false);
+                    return response;
+                },
+                onError: (
+                    error: Error | AxiosError
+                ): void | Promise<unknown> => {
+                    setIsLoadingSubmit(false);
+                    setErrorPut(true);
+                    if (axios.isAxiosError(error)) {
+                        if (error.response) {
+                            if (error.response.status == 401) {
+                                logout();
+                                location.replace("/");
+                            }
+                        }
+                    }
+                    throw new Error("Erro na API.");
+                },
+            });
         } catch (error) {
             setIsLoadingSubmit(false);
             console.log((error as Error).message);
