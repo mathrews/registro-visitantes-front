@@ -140,8 +140,8 @@ const PageVisitantes = () => {
                         .getDate()
                         .toString()
                         .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
-                        .toString()
-                        .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+                            .toString()
+                            .padStart(2, "0")}/${dataAtual.getFullYear()}`;
 
                     createVisita.mutateAsync(
                         {
@@ -194,8 +194,8 @@ const PageVisitantes = () => {
                             .getDate()
                             .toString()
                             .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
-                            .toString()
-                            .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+                                .toString()
+                                .padStart(2, "0")}/${dataAtual.getFullYear()}`;
 
                         createVisita.mutateAsync({
                             visitante_id: request.data[0]?.id,
@@ -252,8 +252,8 @@ const PageVisitantes = () => {
                         .getDate()
                         .toString()
                         .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
-                        .toString()
-                        .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+                            .toString()
+                            .padStart(2, "0")}/${dataAtual.getFullYear()}`;
 
                     createVisita.mutateAsync({
                         visitante_id: request.data[0]?.id,
