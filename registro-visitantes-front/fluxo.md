@@ -32,7 +32,7 @@ CRUD visitantes:
 
 - [ ] Abstrair as requests em custom hooks utilizando o react query:
 -- pageLogin [x],
--- pageVisitantes [],
+-- pageVisitantes [x],
 -- pageDashboard [];
 
 - [ ] Componentizar os elementos HTML utilizando de props e modularizá-los;
