@@ -159,25 +159,25 @@ const PageVisitantes = () => {
                                 setUpdateData(false);
                                 return response;
                             },
-                            onError: (
-                                error: Error | AxiosError
-                            ): void | Promise<unknown> => {
-                                if (axios.isAxiosError(error)) {
-                                    if (error.response) {
-                                        if (error.response.status == 401) {
-                                            logout();
-                                            location.replace("/");
-                                        }
-                                    }
-                                }
+                            onError: (): void | Promise<unknown> => {
+                                setIsLoadingSubmit(false);
                                 throw new Error("Erro na API.");
                             },
                         }
                     );
                 }
             } catch (error) {
+                const err = error as Error | AxiosError;
+                if (axios.isAxiosError(err)) {
+                    if (err.response) {
+                        if (err.response.status == 401) {
+                            logout();
+                            location.replace("/");
+                        }
+                    }
+                }
+                console.log((err).message);
                 setIsLoadingSubmit(false);
-                console.log((error as Error).message);
             }
         } else {
             try {
@@ -211,23 +211,22 @@ const PageVisitantes = () => {
                         setErrorCreate(false);
                         return response;
                     },
-                    onError: (
-                        error: Error | AxiosError
-                    ): void | Promise<unknown> => {
+                    onError: (): void | Promise<unknown> => {
                         setIsLoadingSubmit(false);
                         setErrorCreate(true);
-                        if (axios.isAxiosError(error)) {
-                            if (error.response) {
-                                if (error.response.status == 401) {
-                                    logout();
-                                    location.replace("/");
-                                }
-                            }
-                        }
                         throw new Error("Erro na API.");
                     },
                 });
             } catch (error) {
+                const err = error as Error | AxiosError;
+                if (axios.isAxiosError(err)) {
+                    if (err.response) {
+                        if (err.response.status == 401) {
+                            logout();
+                            location.replace("/");
+                        }
+                    }
+                }
                 console.log((error as Error).message);
                 setIsLoadingSubmit(false);
             }
@@ -270,25 +269,25 @@ const PageVisitantes = () => {
                     setErrorPut(false);
                     return response;
                 },
-                onError: (
-                    error: Error | AxiosError
-                ): void | Promise<unknown> => {
+                onError: (): void | Promise<unknown> => {
                     setIsLoadingSubmit(false);
                     setErrorPut(true);
-                    if (axios.isAxiosError(error)) {
-                        if (error.response) {
-                            if (error.response.status == 401) {
-                                logout();
-                                location.replace("/");
-                            }
-                        }
-                    }
+
                     throw new Error("Erro na API.");
                 },
             });
         } catch (error) {
             setIsLoadingSubmit(false);
-            console.log((error as Error).message);
+            const err = error as Error | AxiosError;
+            if (axios.isAxiosError(err)) {
+                if (err.response) {
+                    if (err.response.status == 401) {
+                        logout();
+                        location.replace("/");
+                    }
+                }
+            }
+            console.log((err).message);
         }
     };
 
