@@ -140,8 +140,8 @@ const PageVisitantes = () => {
                         .getDate()
                         .toString()
                         .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
-                            .toString()
-                            .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+                        .toString()
+                        .padStart(2, "0")}/${dataAtual.getFullYear()}`;
 
                     createVisita.mutateAsync(
                         {
@@ -176,7 +176,7 @@ const PageVisitantes = () => {
                         }
                     }
                 }
-                console.log((err).message);
+                console.log(err.message);
                 setIsLoadingSubmit(false);
             }
         } else {
@@ -194,8 +194,8 @@ const PageVisitantes = () => {
                             .getDate()
                             .toString()
                             .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
-                                .toString()
-                                .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+                            .toString()
+                            .padStart(2, "0")}/${dataAtual.getFullYear()}`;
 
                         createVisita.mutateAsync({
                             visitante_id: request.data[0]?.id,
@@ -236,7 +236,6 @@ const PageVisitantes = () => {
     const [errorPut, setErrorPut] = useState<boolean>(false);
     const updateVisitanteData = useVisitantePut();
     const updateDataPut = async (data: object) => {
-        //refatorar
         setIsLoadingSubmit(true);
         try {
             const formData = { ...data, cpf: cpfValue, id: visitorData?.id };
@@ -251,8 +250,8 @@ const PageVisitantes = () => {
                         .getDate()
                         .toString()
                         .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
-                            .toString()
-                            .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+                        .toString()
+                        .padStart(2, "0")}/${dataAtual.getFullYear()}`;
 
                     createVisita.mutateAsync({
                         visitante_id: request.data[0]?.id,
@@ -272,7 +271,6 @@ const PageVisitantes = () => {
                 onError: (): void | Promise<unknown> => {
                     setIsLoadingSubmit(false);
                     setErrorPut(true);
-
                     throw new Error("Erro na API.");
                 },
             });
@@ -287,7 +285,7 @@ const PageVisitantes = () => {
                     }
                 }
             }
-            console.log((err).message);
+            console.log(err.message);
         }
     };
 

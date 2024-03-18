@@ -29,7 +29,9 @@ type formData = {
 export const useVisitaCreate = () => {
     return useMutation(async (data: visita) => {
         const response = await API.post("/visita", data, {
-            headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
+            headers: {
+                Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            },
         });
         console.log(response.data);
         return response.data;
@@ -46,11 +48,11 @@ export const useVisitanteCreate = () => {
 
 export const useVisitantePut = () => {
     return useMutation(async (formData: formData) => {
-        const response = await API.put(
-            `/visitante/${formData?.id}`,
-            formData,
-            config
-        );
+        const response = await API.put(`/visitante/${formData?.id}`, formData, {
+            headers: {
+                Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            },
+        });
         console.log(response.data);
         return response.data;
     });
