@@ -78,20 +78,16 @@ const PDFDocument = () => {
     };
     visitasPorGeneroRequest();
 
-    const tabela = `<html>
+    const lista = `<html>
             <body>
-                <table border={2}>
-                    <tr>
-                        <td>Visitantes Total</td>
-                        <td>${visitasTotais}</td>
-                        <td>Visitantes Masc</td>
-                        <td>${visitasTotaisMasc}</td>
-                        <td>Visitantes fem</td>
-                        <td>${visitasTotaisFem}</td>
-                        <td>Visitantes outros</td>
-                        <td>${visitasTotaisOutros}</td>
-                    </tr>
-                </table>
+                <div border={2}>
+                    <ul>
+                        <li>Visitantes Total: ${visitasTotais}</li>
+                        <li>Visitantes Masc: ${visitasTotaisMasc}</li>
+                        <li>Visitantes fem: ${visitasTotaisFem}</li>
+                        <li>Visitantes outros: ${visitasTotaisOutros}</li>
+                    </ul>
+                </div>
             </body>
         </html>`;
 
@@ -126,7 +122,7 @@ const PDFDocument = () => {
                     <Image src={brasao} style={styles.bg_imagem} />
                     <View style={styles.main}>
                         <Text>Relatório</Text>
-                        <Html>{tabela}</Html>
+                        <Html>{lista}</Html>
                     </View>
                 </Page>
             </Document>

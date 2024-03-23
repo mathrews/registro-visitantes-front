@@ -9,9 +9,7 @@ import { queryClient } from "./service";
 
 function App() {
     const [isLogged, setIsLogged] = useState<boolean>(false);
-    const [token, setToken] = useState<string>("");
-    
-    
+    const [token, setToken] = useState<string>(""); 
 
     return (
         <>

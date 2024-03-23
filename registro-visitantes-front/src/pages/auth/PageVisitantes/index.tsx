@@ -10,6 +10,14 @@ import { API } from "../../../service";
 import { validarCPF } from "../../../utils/validateCPF";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import RequiredLabel from "../../../components/RequiredLabel";
+import {
+    useVisitaCreate,
+    useVisitanteCreate,
+    useVisitantePut,
+} from "../../../hook/useVisitantes";
+import { logout } from "../../../utils/logout";
+import axios, { AxiosError } from "axios";
 
 const schema = yup
     .object({
@@ -45,8 +53,11 @@ interface visitor {
 }
 
 const PageVisitantes = () => {
-    const dataAtual = new Date(); // Obtem a data atual
-    const [cpfValue, setCpfValue] = useState<string>("");
+    const config = {
+        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
+    };
+
+    const dataAtual = new Date();
     const navigate = useNavigate();
 
     const [selectedGender, setSelectedGender] = useState<number>(0);
@@ -65,14 +76,11 @@ const PageVisitantes = () => {
         },
     ];
 
-    const config = {
-        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
-    };
-
     const [isLoadingSubmit, setIsLoadingSubmit] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [visitorData, setVisitorData] = useState<visitor | null>();
 
+    const [cpfValue, setCpfValue] = useState<string>("");
     const {
         register: createData,
         handleSubmit: createSubmit,
@@ -121,6 +129,8 @@ const PageVisitantes = () => {
 
     const [errorCreate, setErrorCreate] = useState<boolean>(false);
 
+    const createVisita = useVisitaCreate();
+    const createVisitante = useVisitanteCreate();
     const createDataPost = async (data: object) => {
         setIsLoadingSubmit(true);
         if (cpfExists) {
@@ -133,71 +143,90 @@ const PageVisitantes = () => {
                         .toString()
                         .padStart(2, "0")}/${dataAtual.getFullYear()}`;
 
-                    const visitaResponse = await API.post(
-                        "/visita",
+                    createVisita.mutateAsync(
                         {
                             visitante_id: visitorData?.id,
                             data: formattedDate,
                         },
-                        config
-                    );
-                    setIsLoadingSubmit(false);
-                    createReset();
-                    setSelectedGender(0);
-                    setVisitorData(null);
-                    setShowForm(false);
-                    setCpfExists(false);
-                    setUpdateData(false);
-                    return visitaResponse;
-                } else {
-                    throw new Error(
-                        "ID do visitante não encontrado na resposta da API."
+                        {
+                            onSuccess: (response) => {
+                                setIsLoadingSubmit(false);
+                                createReset();
+                                setSelectedGender(0);
+                                setVisitorData(null);
+                                setShowForm(false);
+                                setCpfExists(false);
+                                setUpdateData(false);
+                                return response;
+                            },
+                            onError: (): void | Promise<unknown> => {
+                                setIsLoadingSubmit(false);
+                                throw new Error("Erro na API.");
+                            },
+                        }
                     );
                 }
             } catch (error) {
+                const err = error as Error | AxiosError;
+                if (axios.isAxiosError(err)) {
+                    if (err.response) {
+                        if (err.response.status == 401) {
+                            logout();
+                            location.replace("/");
+                        }
+                    }
+                }
+                console.log(err.message);
                 setIsLoadingSubmit(false);
-                console.log((error as Error).message);
             }
         } else {
             try {
                 const formData = { ...data, cpf: cpfValue };
-                const response = await API.post("/visitante", formData, config);
-                if (response.data.type == "sucesso") {
-                    const request = await API.get(
-                        `/visitante/cpf/${cpfValue}`,
-                        config
-                    );
+                createVisitante.mutateAsync(formData, {
+                    onSuccess: async (response) => {
+                        const request = await API.get(
+                            `/visitante/cpf/${cpfValue}`,
+                            config
+                        );
 
-                    const dataAtual = new Date();
-                    const formattedDate = `${dataAtual
-                        .getDate()
-                        .toString()
-                        .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
-                        .toString()
-                        .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+                        const dataAtual = new Date();
+                        const formattedDate = `${dataAtual
+                            .getDate()
+                            .toString()
+                            .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
+                            .toString()
+                            .padStart(2, "0")}/${dataAtual.getFullYear()}`;
 
-                    const visitaResponse = await API.post(
-                        "/visita",
-                        {
+                        createVisita.mutateAsync({
                             visitante_id: request.data[0]?.id,
                             data: formattedDate,
-                        },
-                        config
-                    );
+                        });
 
-                    createReset();
-                    setShowForm(false);
-                    setSelectedGender(0);
-                    setIsLoadingSubmit(false);
-                    setUpdateData(false);
-                    setCpfExists(false);
-                    setErrorCreate(false);
-                    return visitaResponse;
-                } else {
-                    setIsLoadingSubmit(false);
-                    setErrorCreate(true);
-                }
+                        createReset();
+                        setShowForm(false);
+                        setSelectedGender(0);
+                        setIsLoadingSubmit(false);
+                        setUpdateData(false);
+                        setCpfExists(false);
+                        setErrorCreate(false);
+                        return response;
+                    },
+                    onError: (): void | Promise<unknown> => {
+                        setIsLoadingSubmit(false);
+                        setErrorCreate(true);
+                        throw new Error("Erro na API.");
+                    },
+                });
             } catch (error) {
+                const err = error as Error | AxiosError;
+                if (axios.isAxiosError(err)) {
+                    if (err.response) {
+                        if (err.response.status == 401) {
+                            logout();
+                            location.replace("/");
+                        }
+                    }
+                }
                 console.log((error as Error).message);
                 setIsLoadingSubmit(false);
             }
@@ -205,47 +234,58 @@ const PageVisitantes = () => {
     };
 
     const [errorPut, setErrorPut] = useState<boolean>(false);
+    const updateVisitanteData = useVisitantePut();
     const updateDataPut = async (data: object) => {
         setIsLoadingSubmit(true);
         try {
-            const formData = { ...data, cpf: cpfValue };
-            const response = await API.put(
-                `/visitante/${visitorData?.id}`,
-                formData,
-                config
-            );
-            if (response.data.type == "sucesso") {
-                const formattedDate = `${dataAtual
-                    .getDate()
-                    .toString()
-                    .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
-                    .toString()
-                    .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+            const formData = { ...data, cpf: cpfValue, id: visitorData?.id };
+            updateVisitanteData.mutateAsync(formData, {
+                onSuccess: async (response) => {
+                    const request = await API.get(
+                        `/visitante/cpf/${cpfValue}`,
+                        config
+                    );
 
-                const visitaResponse = await API.post(
-                    "/visita",
-                    {
-                        visitante_id: visitorData?.id,
+                    const formattedDate = `${dataAtual
+                        .getDate()
+                        .toString()
+                        .padStart(2, "0")}/${(dataAtual.getMonth() + 1)
+                        .toString()
+                        .padStart(2, "0")}/${dataAtual.getFullYear()}`;
+
+                    createVisita.mutateAsync({
+                        visitante_id: request.data[0]?.id,
                         data: formattedDate,
-                    },
-                    config
-                );
-                setIsLoadingSubmit(false);
-                createReset();
-                setSelectedGender(0);
-                setVisitorData(null);
-                setCpfExists(false);
-                setUpdateData(false);
-                setShowForm(false);
-                setErrorPut(false);
-                return visitaResponse;
-            } else {
-                setIsLoadingSubmit(false);
-                setErrorPut(true);
-            }
+                    });
+
+                    setIsLoadingSubmit(false);
+                    createReset();
+                    setSelectedGender(0);
+                    setVisitorData(null);
+                    setCpfExists(false);
+                    setUpdateData(false);
+                    setShowForm(false);
+                    setErrorPut(false);
+                    return response;
+                },
+                onError: (): void | Promise<unknown> => {
+                    setIsLoadingSubmit(false);
+                    setErrorPut(true);
+                    throw new Error("Erro na API.");
+                },
+            });
         } catch (error) {
             setIsLoadingSubmit(false);
-            console.log((error as Error).message);
+            const err = error as Error | AxiosError;
+            if (axios.isAxiosError(err)) {
+                if (err.response) {
+                    if (err.response.status == 401) {
+                        logout();
+                        location.replace("/");
+                    }
+                }
+            }
+            console.log(err.message);
         }
     };
 
@@ -276,6 +316,7 @@ const PageVisitantes = () => {
             return "Visita processada.";
         }
     };
+
     return (
         <>
             <main className="surface-500 w-full p-6 flex justify-content-center align-items-center">
@@ -327,7 +368,9 @@ const PageVisitantes = () => {
                             {updateData == true || cpfExists == false ? (
                                 <>
                                     <section className="flex flex-column">
-                                        <label htmlFor="cpf">CPF</label>
+                                        <label htmlFor="cpf">
+                                            CPF <RequiredLabel />
+                                        </label>
                                         <InputText
                                             value={cpfValue}
                                             className="border-2 border-500 border-round-md p-2 text-900"
@@ -340,7 +383,8 @@ const PageVisitantes = () => {
 
                                     <section className="flex flex-column mt-1">
                                         <label htmlFor="nome">
-                                            Nome do(a) visitante
+                                            Nome do(a) visitante{" "}
+                                            <RequiredLabel />
                                         </label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
@@ -351,7 +395,7 @@ const PageVisitantes = () => {
 
                                     <section className="flex flex-column mt-1">
                                         <label htmlFor="profissao">
-                                            Profissão
+                                            Profissão <RequiredLabel />
                                         </label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
@@ -361,7 +405,9 @@ const PageVisitantes = () => {
                                     </section>
 
                                     <section className="flex flex-column mt-1">
-                                        <label htmlFor="cep">CEP</label>
+                                        <label htmlFor="cep">
+                                            CEP <RequiredLabel />
+                                        </label>
                                         <InputText
                                             className="border-2 border-500 border-round-md p-2 text-900"
                                             placeholder="00000000"
@@ -384,7 +430,7 @@ const PageVisitantes = () => {
                                         <div>
                                             <section className="flex flex-column">
                                                 <label htmlFor="genero_id">
-                                                    Gênero
+                                                    Gênero <RequiredLabel />
                                                 </label>
                                                 <Dropdown
                                                     value={selectedGender}
@@ -429,7 +475,9 @@ const PageVisitantes = () => {
                                                 />
                                             </section>
                                             <section className="flex flex-column">
-                                                <label htmlFor="uf">UF</label>
+                                                <label htmlFor="uf">
+                                                    UF <RequiredLabel />
+                                                </label>
                                                 <InputText
                                                     {...createData("uf")}
                                                     placeholder="Digite sua unidade federal"
@@ -441,7 +489,8 @@ const PageVisitantes = () => {
                                         <div>
                                             <section className="flex flex-column">
                                                 <label htmlFor="dataNascimento">
-                                                    Data de Nascimento
+                                                    Data de Nascimento{" "}
+                                                    <RequiredLabel />
                                                 </label>
                                                 <InputText
                                                     className="focus:border-transparent h-3rem border-2 border-500 border-round-md p-2 mb-2 text-900"
@@ -453,7 +502,7 @@ const PageVisitantes = () => {
                                             </section>
                                             <section className="flex flex-column">
                                                 <label htmlFor="cidade">
-                                                    Cidade
+                                                    Cidade <RequiredLabel />
                                                 </label>
                                                 <InputText
                                                     {...createData("cidade")}
