@@ -240,8 +240,7 @@ const PageAdmin = () => {
 
         const requestVisitasPorMes = await API.get("/visita", config);
         const responseVisitasPorMes = await requestVisitasPorMes.data;
-        console.log(responseVisitasPorMes);
-        
+                
 
         const meses = [
             "Janeiro",
