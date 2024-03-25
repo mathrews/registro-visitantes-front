@@ -1,0 +1,29 @@
+.navigator {
+        
+    width: 100%;
+    
+    & ul {
+        display: flex;
+        gap: 32px;
+        & li {
+
+            & a {
+                color: #FFF;
+                line-height: 26px;
+                display: block;
+                transition-duration: 200ms;
+            }
+            
+            & a:hover {
+                color: #179ee1;
+            }
+        
+            & a.active {
+                color: #fefefe;
+                font-weight: bold;
+                border-bottom: 3px solid #179ee1;
+            }
+        }
+    }
+
+}
