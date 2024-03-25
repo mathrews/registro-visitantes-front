@@ -98,6 +98,7 @@ const PageAdmin = () => {
   const { data: visitantes } = useVisitantesGet();
   const { data: visitantesPorGen } = useVisitantesPorGenGet();
   const { data: visitas } = useVisitasDashboardGet();
+  
 
   const visitantesPorUF = async () => {
     try {
