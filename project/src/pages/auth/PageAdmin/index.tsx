@@ -2,7 +2,7 @@ import styled from "styled-components";
 import PdfDownloader from "../../../components/PdfDownloader";
 import { Chart } from "primereact/chart";
 import { useEffect, useState } from "react";
-import { useVisitantesGet, useVisitantesPorGenGet, useVisitasDashboardGet } from "../../../hook/useDashboard";
+import { API } from "../../../service";
 
 const TelaAdminContainer = styled.section`
     padding: 60px;
@@ -46,465 +46,451 @@ const TelaAdminContainer = styled.section`
 `;
 
 type tableVisitorsYear = {
-  labels: string[];
-  datasets: {
-    label: string;
-    data: number[];
-    fill: boolean;
-    borderColor: string;
-    tension: number;
-  }[];
+    labels: string[];
+    datasets: {
+        label: string;
+        data: number[];
+        fill: boolean;
+        borderColor: string;
+        tension: number;
+    }[];
 };
 
 type genero = {
-  id: number;
-  nome: string;
+    nome: string;
 };
 
 type visitor = {
-  id: number;
-  nome: string;
-  cpf: string;
-  dataNascimento: string;
-  profissao: string;
-  endereco: string;
-  numero: string;
-  complemento: string;
-  bairro: string;
-  cidade: string;
-  uf: string;
-  cep: string;
-  genero_id: number;
+    id: number;
+    nome: string;
+    cpf: string;
+    dataNascimento: string;
+    profissao: string;
+    endereco: string;
+    numero: string;
+    complemento: string;
+    bairro: string;
+    cidade: string;
+    uf: string;
+    cep: string;
+    genero_id: number;
 };
 
 type visita = {
-  id: number;
-  visitante_id: number;
-  data: string;
+    visitante_id: number;
+    data: string;
 };
 
 const PageAdmin = () => {
-  const [chartData, setChartData] = useState({});
-  const [chartOptions, setChartOptions] = useState({});
-  const [chartDataPie, setChartDataPie] = useState({});
-  const [chartOptionsPie, setChartOptionsPie] = useState({});
-  const [chartDataLine, setChartDataLine] = useState({});
-  const [chartOptionsLine, setChartOptionsLine] = useState({});
-  const [chartDataPieJobs, setChartDataPieJobs] = useState({});
-  const [chartOptionsPieJobs, setChartOptionsPieJobs] = useState({});
+    const [chartData, setChartData] = useState({});
+    const [chartOptions, setChartOptions] = useState({});
+    const [chartDataPie, setChartDataPie] = useState({});
+    const [chartOptionsPie, setChartOptionsPie] = useState({});
+    const [chartDataLine, setChartDataLine] = useState({});
+    const [chartOptionsLine, setChartOptionsLine] = useState({});
+    const [chartDataPieJobs, setChartDataPieJobs] = useState({});
+    const [chartOptionsPieJobs, setChartOptionsPieJobs] = useState({});
 
-  const [visitorsYear, setVisitorsYear] = useState<number>();
+    const [visitorsYear, setVisitorsYear] = useState<number>();
 
-  const { data: visitantes } = useVisitantesGet();
-  const { data: visitantesPorGen } = useVisitantesPorGenGet();
-  const { data: visitas } = useVisitasDashboardGet();
-  
+    const config = {
+        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
+    };
 
-  const visitantesPorUF = async () => {
-    try {
-      if (visitantes) {
-        const contarPorUF = () => {
-          const ufs: string[] = Array.from(
-            new Set(
-              visitantes.map((item: visitor) => item?.uf)
-            )
-          );
+    const visitantesPorUF = async () => {
+        try {
+            const requestQuantosPorUF = await API.get("/visitante", config);
+            const responseQuantosPorUF = await requestQuantosPorUF.data;
 
-          const contagemUfs: { uf: string; contagem: number }[] = ufs.map(
-            (item: string) => ({
-              uf: item,
-              contagem: 0,
-            })
-          );
+            const contarPorUF = () => {
+                const ufs: string[] = Array.from(
+                    new Set(
+                        responseQuantosPorUF.map((item: visitor) => item?.uf)
+                    )
+                );
 
-          visitantes.map((itemPriority: visitor) => {
-            contagemUfs.map((item) => {
-              if (item?.uf == itemPriority?.uf) {
-                ++item.contagem;
-              }
-            });
-          });
+                const contagemUfs: { uf: string; contagem: number }[] = ufs.map(
+                    (item: string) => ({
+                        uf: item,
+                        contagem: 0,
+                    })
+                );
 
-          return contagemUfs.map((item) => item.contagem);
-        };
+                responseQuantosPorUF.map((itemPriority: visitor) => {
+                    contagemUfs.map((item) => {
+                        if (item?.uf == itemPriority?.uf) {
+                            ++item.contagem;
+                        }
+                    });
+                });
 
-        const data = {
-          labels: Array.from(
-            new Set(
-              visitantes.map((item: visitor) => item?.uf)
-            )
-          ),
-          datasets: [
-            {
-              label: "Total de visitantes",
-              data: contarPorUF(),
-              backgroundColor: [
-                "rgba(255, 159, 64, 0.2)",
-                "rgba(75, 192, 192, 0.2)",
-                "rgba(54, 162, 235, 0.2)",
-                "rgba(153, 102, 255, 0.2)",
-              ],
-              borderColor: [
-                "rgb(255, 159, 64)",
-                "rgb(75, 192, 192)",
-                "rgb(54, 162, 235)",
-                "rgb(153, 102, 255)",
-              ],
-              borderWidth: 1,
-            },
-          ],
-        };
+                return contagemUfs.map((item) => item.contagem);
+            };
 
-        const options = {
-          scales: {
-            y: {
-              beginAtZero: true,
-            },
-          },
-          responsive: true,
-        };
+            const data = {
+                labels: Array.from(
+                    new Set(
+                        responseQuantosPorUF.map((item: visitor) => item?.uf)
+                    )
+                ),
+                datasets: [
+                    {
+                        label: "Total de visitantes",
+                        data: contarPorUF(),
+                        backgroundColor: [
+                            "rgba(255, 159, 64, 0.2)",
+                            "rgba(75, 192, 192, 0.2)",
+                            "rgba(54, 162, 235, 0.2)",
+                            "rgba(153, 102, 255, 0.2)",
+                        ],
+                        borderColor: [
+                            "rgb(255, 159, 64)",
+                            "rgb(75, 192, 192)",
+                            "rgb(54, 162, 235)",
+                            "rgb(153, 102, 255)",
+                        ],
+                        borderWidth: 1,
+                    },
+                ],
+            };
 
-        setChartData(data);
-        setChartOptions(options);
-      } else {
-        throw new Error("visitantesPorUF não estão chegando corretamente!");
-      }
-    } catch (error) {
-      console.log((error as Error).message);
-    }
-  };
+            const options = {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                    },
+                },
+                responsive: true,
+            };
 
-  const visitantesPorGenero = async () => {
-    try {
-      if (visitantes && visitantesPorGen) {
-        const genders = [0, 0, 0];
-        const contarVisitantesPorGenero = () => {
-          visitantes.map((item: visitor) => {
-            if (item?.genero_id == 1) {
-              ++genders[1];
-            } else if (item?.genero_id == 2) {
-              ++genders[0];
-            } else if (item?.genero_id == 3) {
-              ++genders[2];
-            }
-          });
-          return genders;
-        };
-
-        // CONFIGURAÇÕES DO CHART PIE
-
-        const dataPie = {
-          labels: visitantesPorGen.map((r: genero) => r.nome),
-          datasets: [
-            {
-              data: contarVisitantesPorGenero(),
-              backgroundColor: [
-                "rgba(255, 159, 64, 0.2)",
-                "rgba(75, 192, 192, 0.2)",
-                "rgba(54, 162, 235, 0.2)",
-              ],
-              borderColor: [
-                "rgb(255, 159, 64)",
-                "rgb(75, 192, 192)",
-                "rgb(54, 162, 235)",
-              ],
-            },
-          ],
-        };
-        const optionsPie = {
-          plugins: {
-            legend: {
-              labels: {
-                usePointStyle: true,
-              },
-            },
-          },
-        };
-
-        setChartDataPie(dataPie);
-        setChartOptionsPie(optionsPie);
-      } else {
-        throw new Error("visitantesPorGenero não está chegando corretamente!");
-      }
-
-    } catch (error) {
-      console.log((error as Error).message);
-    }
-  };
-
-  const visitantesPorMes = async () => {
-    try {
-      const documentStyle = getComputedStyle(document.documentElement);
-      const textColor = documentStyle.getPropertyValue("--text-color");
-      const textColorSecondary = documentStyle.getPropertyValue(
-        "--text-color-secondary"
-      );
-      const surfaceBorder =
-        documentStyle.getPropertyValue("--surface-border");
-
-      const meses = [
-        "Janeiro",
-        "Fevereiro",
-        "Março",
-        "Abril",
-        "Maio",
-        "Junho",
-        "Julho",
-        "Agosto",
-        "Setembro",
-        "Outubro",
-        "Novembro",
-        "Dezembro",
-      ];
-
-      const visitantesPorMesContagem = () => {
-        if (visitas) {
-          const contagem = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-          visitas.map((item: visita) => { //erro
-            if (item.data.split("-")[1] == "01") {
-              ++contagem[0];
-            }
-            if (item.data.split("-")[1] == "02") {
-              ++contagem[1];
-            }
-            if (item.data.split("-")[1] == "03") {
-              ++contagem[2];
-            }
-            if (item.data.split("-")[1] == "04") {
-              ++contagem[3];
-            }
-            if (item.data.split("-")[1] == "05") {
-              ++contagem[4];
-            }
-            if (item.data.split("-")[1] == "06") {
-              ++contagem[5];
-            }
-            if (item.data.split("-")[1] == "07") {
-              ++contagem[6];
-            }
-            if (item.data.split("-")[1] == "08") {
-              ++contagem[7];
-            }
-            if (item.data.split("-")[1] == "09") {
-              ++contagem[8];
-            }
-            if (item.data.split("-")[1] == "10") {
-              ++contagem[9];
-            }
-            if (item.data.split("-")[1] == "11") {
-              ++contagem[10];
-            }
-            if (item.data.split("-")[1] == "12") {
-              ++contagem[11];
-            }
-          });
-
-          return contagem;
-        } else {
-          throw new Error("Visitas não está chegando de forma correta!")
+            setChartData(data);
+            setChartOptions(options);
+        } catch (error) {
+            console.log((error as Error).message);
         }
-      };
+    };
 
-      const dataLine = {
-        labels: meses,
-        datasets: [
-          {
-            label: "Visitantes Gerais",
-            data: visitantesPorMesContagem(),
-            fill: false,
-            borderColor: documentStyle.getPropertyValue("--blue-500"),
-            tension: 0.4,
-          },
-        ],
-      };
-      const optionsLine = {
-        maintainAspectRatio: false,
-        aspectRatio: 0.6,
-        plugins: {
-          legend: {
-            labels: {
-              color: textColor,
-            },
-          },
-        },
-        scales: {
-          x: {
-            ticks: {
-              color: textColorSecondary,
-            },
-            grid: {
-              color: surfaceBorder,
-            },
-          },
-          y: {
-            ticks: {
-              color: textColorSecondary,
-            },
-            grid: {
-              color: surfaceBorder,
-            },
-          },
-        },
-      };
+    const visitantesPorGenero = async () => {
+        try {
+            const request = await API.get("/genero", config);
+            const response = await request.data;
 
-      const allVisitorsYear = (table: tableVisitorsYear) => {
-        const datasets = table.datasets;
-        let sum = 0;
-        datasets.map((item) => {
-          item.data.map((item) => {
-            sum += item;
-          });
-        });
-        setVisitorsYear(sum);
-      };
-      allVisitorsYear(dataLine);
-      setChartDataLine(dataLine);
-      setChartOptionsLine(optionsLine);
-    } catch (error) {
-      console.log((error as Error).message);
-    }
-  };
+            const requestQuantosPorGenero = await API.get("/visitante", config);
+            const responseQuantosPorGenero = await requestQuantosPorGenero.data;
 
-  const visitantesTopProfissao = async () => {
-    try {
-      if (visitantes) {
-        const contarPorProfissao = () => {
-          const profissoes: string[] = Array.from(
-            new Set(
-              visitantes.map((item: visitor) => item?.profissao)
-            )
-          );
+            const genders = [0, 0, 0];
+            const contarVisitantesPorGenero = () => {
+                responseQuantosPorGenero.map((item: visitor) => {
+                    if (item?.genero_id == 1) {
+                        ++genders[1];
+                    } else if (item?.genero_id == 2) {
+                        ++genders[0];
+                    } else if (item?.genero_id == 3) {
+                        ++genders[2];
+                    }
+                });
+                return genders;
+            };
 
-          const contagemProfissoes: { profissao: string; contagem: number }[] = profissoes.map(
-            (item: string) => ({
-              profissao: item,
-              contagem: 0,
-            })
-          );
+            // CONFIGURAÇÕES DO CHART PIE
 
-          visitantes.map((itemPriority: visitor) => {
-            contagemProfissoes.map((item) => {
-              if (item?.profissao == itemPriority?.profissao) {
-                ++item.contagem;
-              }
+            const dataPie = {
+                labels: response.map((r: genero) => r.nome),
+                datasets: [
+                    {
+                        data: contarVisitantesPorGenero(),
+                        backgroundColor: [
+                            "rgba(255, 159, 64, 0.2)",
+                            "rgba(75, 192, 192, 0.2)",
+                            "rgba(54, 162, 235, 0.2)",
+                        ],
+                        borderColor: [
+                            "rgb(255, 159, 64)",
+                            "rgb(75, 192, 192)",
+                            "rgb(54, 162, 235)",
+                        ],
+                    },
+                ],
+            };
+            const optionsPie = {
+                plugins: {
+                    legend: {
+                        labels: {
+                            usePointStyle: true,
+                        },
+                    },
+                },
+            };
+
+            setChartDataPie(dataPie);
+            setChartOptionsPie(optionsPie);
+        } catch (error) {
+            console.log((error as Error).message);
+        }
+    };
+
+    const visitantesPorMês = async () => {
+        const documentStyle = getComputedStyle(document.documentElement);
+        const textColor = documentStyle.getPropertyValue("--text-color");
+        const textColorSecondary = documentStyle.getPropertyValue(
+            "--text-color-secondary"
+        );
+        const surfaceBorder =
+            documentStyle.getPropertyValue("--surface-border");
+
+        const requestVisitasPorMes = await API.get("/visita", config);
+        const responseVisitasPorMes = await requestVisitasPorMes.data;
+                
+
+        const meses = [
+            "Janeiro",
+            "Fevereiro",
+            "Março",
+            "Abril",
+            "Maio",
+            "Junho",
+            "Julho",
+            "Agosto",
+            "Setembro",
+            "Outubro",
+            "Novembro",
+            "Dezembro",
+        ];
+
+        const visitantesPorMes = () => {
+            const contagem = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            responseVisitasPorMes.map((item: visita) => {
+                if (item.data.split("-")[1] == "01") {
+                    ++contagem[0];
+                }
+                if (item.data.split("-")[1] == "02") {
+                    ++contagem[1];
+                }
+                if (item.data.split("-")[1] == "03") {
+                    ++contagem[2];
+                }
+                if (item.data.split("-")[1] == "04") {
+                    ++contagem[3];
+                }
+                if (item.data.split("-")[1] == "05") {
+                    ++contagem[4];
+                }
+                if (item.data.split("-")[1] == "06") {
+                    ++contagem[5];
+                }
+                if (item.data.split("-")[1] == "07") {
+                    ++contagem[6];
+                }
+                if (item.data.split("-")[1] == "08") {
+                    ++contagem[7];
+                }
+                if (item.data.split("-")[1] == "09") {
+                    ++contagem[8];
+                }
+                if (item.data.split("-")[1] == "10") {
+                    ++contagem[9];
+                }
+                if (item.data.split("-")[1] == "11") {
+                    ++contagem[10];
+                }
+                if (item.data.split("-")[1] == "12") {
+                    ++contagem[11];
+                }
             });
-          });
 
-          return contagemProfissoes.map((item) => item.contagem);
+            return contagem;
+        };
 
+        const dataLine = {
+            labels: meses,
+            datasets: [
+                {
+                    label: "Visitantes Gerais",
+                    data: visitantesPorMes(),
+                    fill: false,
+                    borderColor: documentStyle.getPropertyValue("--blue-500"),
+                    tension: 0.4,
+                },
+            ],
+        };
+        const optionsLine = {
+            maintainAspectRatio: false,
+            aspectRatio: 0.6,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: textColor,
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: textColorSecondary,
+                    },
+                    grid: {
+                        color: surfaceBorder,
+                    },
+                },
+                y: {
+                    ticks: {
+                        color: textColorSecondary,
+                    },
+                    grid: {
+                        color: surfaceBorder,
+                    },
+                },
+            },
+        };
+
+        const allVisitorsYear = (table: tableVisitorsYear) => {
+            const datasets = table.datasets;
+            let sum = 0;
+            datasets.map((item) => {
+                item.data.map((item) => {
+                    sum += item;
+                });
+            });
+            setVisitorsYear(sum);
+        };
+        allVisitorsYear(dataLine);
+        setChartDataLine(dataLine);
+        setChartOptionsLine(optionsLine);
+    };
+
+    const visitantesTopProfissao = async () => {
+        const requestProfissao = await API.get("/visitante", config);
+        const responseProfissao = await requestProfissao.data;
+
+        const contarPorProfissao = () => {
+            const profissoes: string[] = Array.from(
+                new Set(
+                    responseProfissao.map((item: visitor) => item?.profissao)
+                )
+            );
+
+            const contagemProfissoes: { profissao: string; contagem: number }[] = profissoes.map(
+                (item: string) => ({
+                    profissao: item,
+                    contagem: 0,
+                })
+            );
+
+            responseProfissao.map((itemPriority: visitor) => {
+                contagemProfissoes.map((item) => {
+                    if (item?.profissao == itemPriority?.profissao) {
+                        ++item.contagem;
+                    }
+                });
+            });
+
+            return contagemProfissoes.map((item) => item.contagem);
         };
 
         const dataPieJobs = {
-          labels: Array.from(
-            new Set(
-              visitantes.map((item: visitor) => item?.profissao) //erro
-            )
-          ),
-          datasets: [
-            {
-              data: contarPorProfissao(),
-              backgroundColor: [
-                "rgba(255, 159, 64, 0.2)",
-                "rgba(75, 192, 192, 0.2)",
-                "rgba(54, 162, 235, 0.2)",
-                "rgba(153, 102, 255, 0.2)",
-                "rgba(232, 102, 255, 0.2)",
-              ],
-              borderColor: [
-                "rgb(255, 159, 64)",
-                "rgb(75, 192, 192)",
-                "rgb(54, 162, 235)",
-                "rgb(153, 102, 255)",
-                "rgb(232, 102, 255)",
-              ],
-              hoverBackgroundColor: [
-                "rgba(255, 159, 64, 0.2)",
-                "rgba(75, 192, 192, 0.2)",
-                "rgba(54, 162, 235, 0.2)",
-                "rgba(153, 102, 255, 0.2)",
-                "rgba(232, 102, 255, 0.2)",
-              ],
-            },
-          ],
+            labels: Array.from(
+                new Set(
+                    responseProfissao.map((item: visitor) => item?.profissao)
+                )
+            ),
+            datasets: [
+                {
+                    data: contarPorProfissao(),
+                    backgroundColor: [
+                        "rgba(255, 159, 64, 0.2)",
+                        "rgba(75, 192, 192, 0.2)",
+                        "rgba(54, 162, 235, 0.2)",
+                        "rgba(153, 102, 255, 0.2)",
+                        "rgba(232, 102, 255, 0.2)",
+                    ],
+                    borderColor: [
+                        "rgb(255, 159, 64)",
+                        "rgb(75, 192, 192)",
+                        "rgb(54, 162, 235)",
+                        "rgb(153, 102, 255)",
+                        "rgb(232, 102, 255)",
+                    ],
+                    hoverBackgroundColor: [
+                        "rgba(255, 159, 64, 0.2)",
+                        "rgba(75, 192, 192, 0.2)",
+                        "rgba(54, 162, 235, 0.2)",
+                        "rgba(153, 102, 255, 0.2)",
+                        "rgba(232, 102, 255, 0.2)",
+                    ],
+                },
+            ],
         };
         const optionsPieJobs = {
-          plugins: {
-            legend: {
-              labels: {
-                usePointStyle: true,
-              },
+            plugins: {
+                legend: {
+                    labels: {
+                        usePointStyle: true,
+                    },
+                },
             },
-          },
         };
 
         setChartDataPieJobs(dataPieJobs);
         setChartOptionsPieJobs(optionsPieJobs);
-      } else {
-        throw new Error("Visitantes não estão chegando corretamente!");
-      }
+    };
 
-    } catch (error) {
-      console.log((error as Error).message);
-    }
-  };
+    useEffect(() => {
+        visitantesPorGenero();
+        visitantesPorUF();
+        visitantesPorMês();
+        visitantesTopProfissao();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-  useEffect(() => {
-    visitantesPorGenero();
-    visitantesPorUF();
-    visitantesPorMes();
-    visitantesTopProfissao();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return (
-    <>
-      <TelaAdminContainer>
-        <h1 className="text-white">
-          Dashboard
-          <PdfDownloader />
-        </h1>
-        <div className="graficos bg-white">
-          <div>
-            <h4>Visitantes por UF</h4>
-            <Chart
-              className="grafico"
-              type="bar"
-              data={chartData}
-              options={chartOptions}
-            />
-          </div>
-          <div>
-            <h4>Total de visitantes por genero</h4>
-            <Chart
-              className="grafico"
-              type="pie"
-              data={chartDataPie}
-              options={chartOptionsPie}
-            />
-          </div>
-          <div>
-            <h4>Total de visitas (por mês)</h4>
-            <Chart
-              className="grafico"
-              type="line"
-              data={chartDataLine}
-              options={chartOptionsLine}
-            />
-            <h4>Total de visitantes por ano {visitorsYear}</h4>
-          </div>
-          <div>
-            <h4>Top Empregos</h4>
-            <Chart
-              className="grafico"
-              type="pie"
-              data={chartDataPieJobs}
-              options={chartOptionsPieJobs}
-            />
-          </div>
-        </div>
-      </TelaAdminContainer>
-    </>
-  );
+    return (
+        <>
+            <TelaAdminContainer>
+                <h1 className="text-white">
+                    Dashboard
+                    <PdfDownloader />
+                </h1>
+                <div className="graficos bg-white ">
+                    <div>
+                        <h4>Visitantes por UF</h4>
+                        <Chart
+                            className="grafico"
+                            type="bar"
+                            data={chartData}
+                            options={chartOptions}
+                        />
+                    </div>
+                    <div>
+                        <h4>Total de visitantes por genero</h4>
+                        <Chart
+                            className="grafico"
+                            type="pie"
+                            data={chartDataPie}
+                            options={chartOptionsPie}
+                        />
+                    </div>
+                    <div>
+                        <h4>Total de visitas (por mês)</h4>
+                        <Chart
+                            className="grafico"
+                            type="line"
+                            data={chartDataLine}
+                            options={chartOptionsLine}
+                        />
+                        <h4>Total de visitantes por ano {visitorsYear}</h4>
+                    </div>
+                    <div>
+                        <h4>Top Empregos</h4>
+                        <Chart
+                            className="grafico"
+                            type="pie"
+                            data={chartDataPieJobs}
+                            options={chartOptionsPieJobs}
+                        />
+                    </div>
+                </div>
+            </TelaAdminContainer>
+        </>
+    );
 };
 
 export default PageAdmin;
