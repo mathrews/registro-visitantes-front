@@ -476,7 +476,7 @@ const PageAdmin = () => {
                             data={chartDataLine}
                             options={chartOptionsLine}
                         />
-                        <h4>Total de visitantes por ano {visitorsYear}</h4>
+                        <h4>Total de visitas por ano {visitorsYear}</h4>
                     </div>
                     <div>
                         <h4>Top Empregos</h4>
